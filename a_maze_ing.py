@@ -1,5 +1,26 @@
-# 0101
+# 1110
 # swne
+
+import random
+
+ascii_list = {
+    0 : " ", # O 
+    1 : "▐", # eC
+    2 : "▀", # nC
+    3 : "▜",
+    4 : "▌", 
+    5 : "▌",
+    6 : "▛",
+    7 : "▄",
+    8 : "▄",
+    9 : "▟",
+    10: "▘",
+    11: "▐",
+    12: "▙",
+    13: "▇",
+    14: "▝",
+    15: "□"
+}
 
 def backtracker(location: list[int], visted: list[int]):
     pass
@@ -16,18 +37,30 @@ def display(maze: list[list[int]], w: int, h: int):
             j += 1
         print("")
         i += 1
+
+def display_ascii(maze: list[list[int]], w: int, h: int):
+    i = 0
             
+    while (i < h):
+        j = 0
+        while (j < w):
+            print(ascii_list[maze[i][j]], end="")
+            j += 1
+        print("")
+        i += 1
+
 
 def gen_maze(maze: list[list[int]], w: int, h: int):
     i = 0
     while (i < h):
         j = 0
         while (j < w):
-            maze[i][j] = 15
+            maze[i][j] = random.randint(0, 15)
             j += 1
         i += 1
     
     display(maze, w, h)
+    display_ascii(maze, w, h)
 
 
 def main():
