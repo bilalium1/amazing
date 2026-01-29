@@ -1,6 +1,11 @@
-WIDTH=25
-HEIGHT=25
+WIDTH=10
+HEIGHT=7
 ENTRY=0,0
-EXIT=19,14
+EXIT=3,9
 OUTPUT_FILE=maze.txt
 PERFECT=True
+
+#ascii art
+#generate bit maze
+#traversing algorithm
+#animation clear print
