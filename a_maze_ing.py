@@ -1,9 +1,8 @@
 # 0000
 # swne
 
+import mlx
 import random
-import os
-import time
 from collections import deque
 
 fps = 60
@@ -29,11 +28,11 @@ def solve_maze(maze, w, h, start, end):
         x, y = q.popleft()
         if (x, y) == (ex, ey):
             break
+        cell = maze[y][x]
         
-    cell = maze[y][x]
-    for d in [S, W, N, E]:
-        if cell & d:
-            continue
+        for d in [S, W, N, E]:
+            if cell & d:
+                continue
         nx = x + DX[d]
         ny = y + DY[d]
     
@@ -202,7 +201,7 @@ def main():
 
     maze = [[0]*width for _ in range(height)]
     maze = generate_maze(width, height)
-    maze[1][1] = 15
+    """maze[1][1] = 15
     maze[2][1] = 15
     maze[3][1] = 15
     maze[3][2] = 15
@@ -219,12 +218,13 @@ def main():
     maze[2][7] = 15
     maze[1][7] = 15
     maze[1][5] = 15
-    maze[1][6] = 15
+    maze[1][6] = 15"""
     new_maze = convert(maze, width, height)
     new_maze[(start_pos[0] * 3) + 1][(start_pos[1] * 3) + 1] = 2
     new_maze[(end_pos[0] * 3) + 1][(end_pos[1] * 3) + 1] = 3
     display_maze(new_maze)
-
+    path = solve_maze(maze, width, height, start_pos, end_pos)
+    print(path)
     file.close()
 
 
