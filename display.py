@@ -22,15 +22,18 @@ for x in range(0, 200):
 
 # Draw a string
 mlx.mlx_string_put(mlx_ptr, win_ptr, 150, 20, 0xFF0000, "Hello MLX")
-def close_window(keycode, param):
-    if keycode == 65307:  # ESC key on Debian/Linux
-        mlx.mlx_destroy_window(mlx_ptr, win_ptr)
-        sys.exit(0)
 
-mlx.mlx_hook(win_ptr, 2, 1 << 0, close_window, None)
+
+def close_window(keycode, param):
+    mlx.mlx_destroy_window(mlx_ptr, win_ptr)
+    sys.exit(0)
+
+
+mlx.mlx_hook(win_ptr, 17, 0, close_window, None)
 mlx.mlx_loop(mlx_ptr)
 
 # Start loop onc
+
 
 class block:
     def __init__(self, info, size, offset, color):
