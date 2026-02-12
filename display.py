@@ -8,7 +8,14 @@ ESC = 65307  # X11 ESC KEYCODE
 matrix = [[random.randint(0, 15) for _ in range(10)] for _ in range(10)]
 
 
+
+# BLOCK CLASS
+
+
 class block:
+    """
+    This class is for each block in the maze to be displayed
+    """
     def __init__(self, info, size, offset, color):
         self.i = info
         self.s = size
@@ -40,6 +47,7 @@ class block:
             for j in range(self.o[1], self.o[1] + self.s):
                 mlx.mlx_pixel_put(mlx_ptr, win_ptr, i, j, j + i)
 
+
 for row in matrix:
     print(row)
 
@@ -61,11 +69,11 @@ for i in range(0, 9):
 # Draw a string
 mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE ")
 
+
 def close_window(keycode, param):
     if keycode == ESC:
         mlx.mlx_destroy_window(mlx_ptr, win_ptr)
         os._exit(0)
-
 
 mlx.mlx_key_hook(win_ptr, close_window, None)
 mlx.mlx_loop(mlx_ptr)

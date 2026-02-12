@@ -1,9 +1,12 @@
 # 0000
 # swne
 
-import mlx
+from mlx import Mlx
 import random
-from collections import deque
+import os
+import time
+
+ESC = 65307  # X11 ESC KEYCODE
 
 fps = 60
 
@@ -14,42 +17,6 @@ DY = {E: 0, W: 0, N: -1, S: 1}
 
 OPP = {E: W, W: E, N: S, S: N}
 
-def solve_maze(maze, w, h, start, end):
-    sx, sy = start
-    ex, ey = end
-    visited = [[False]*w for _ in range(h)]
-    parent = [[None]*w for _ in range(h)]
-    
-    q = deque()
-    q.append((sx, sy))
-    visited[sy][sx] = True
-    
-    while q:
-        x, y = q.popleft()
-        if (x, y) == (ex, ey):
-            break
-        cell = maze[y][x]
-        
-        for d in [S, W, N, E]:
-            if cell & d:
-                continue
-        nx = x + DX[d]
-        ny = y + DY[d]
-    
-    if 0 <= nx < w and 0 <= ny < h and not visited[ny][nx]:
-        visited[ny][nx] = True
-        parent[ny][nx] = (x, y)
-        q.append((nx, ny))
-        
-    path = []
-    cur = (ex, ey)
-    while cur:
-        path.append(cur)
-        x, y = cur
-        cur = parent[y][x]
-    
-    path.reverse()
-    return path
 
 def generate_maze(w, h):
     maze = [[15 for _ in range(w)] for _ in range(h)]  # all walls closed
@@ -75,59 +42,10 @@ def generate_maze(w, h):
     dfs(0, 0)
     return maze
 
-def convert(maze, w, h):
-
-    maze_conv = [[0] * (w * 3) for _ in range(h * 3)]
-
-    for i in range(h):
-        for j in range(w):
-
-            x = i * 3
-            y = j * 3
-
-            cell = maze[i][j]
-            full = (cell == 15)
-
-            # Center
-            maze_conv[x+1][y+1] = 0
-
-            # East
-            if cell & E:
-                for k in range(3):
-                    maze_conv[x+k][y+2] = 1
-
-            # South
-            if cell & S:
-                for k in range(3):
-                    maze_conv[x+2][y+k] = 1
-
-            # North (only if full or top edge)
-            if full or (i == 0 and (cell & N)):
-                if cell & N:
-                    for k in range(3):
-                        maze_conv[x][y+k] = 1
-
-            # West (only if full or left edge)
-            if full or (j == 0 and (cell & W)):
-                if cell & W:
-                    for k in range(3):
-                        maze_conv[x+k][y] = 1
-
-            if full:
-                for k in range(3):
-                    maze_conv[x+k][y] = 4
-                for k in range(3):
-                    maze_conv[x+k][y+1] = 4
-                for k in range(3):
-                    maze_conv[x+k][y+2] = 4
-
-    return maze_conv
-
 
 def display(maze: list[list[int]], w: int, h: int):
 
     hex = "0123456789ABCDEF"
-    
     i = 0
     while (i < h):
         j = 0
@@ -147,25 +65,54 @@ def gen_maze(maze: list[list[int]], w: int, h: int):
             j += 1
         i += 1
 
+# BLOCK CLASS
 
-# ▞
-def display_maze(maze: list[list[int]]):
-    PATH = "__"
-    WALL = "▓▒"
 
-    for row in maze:
-        for cell in row:
-            if cell == 0:
-                print(PATH, end="")
-            elif cell == 1:
-                print(WALL, end="")
-            elif cell == 2:
-                print("\033[31m🯅 \033[0m", end="")  # red block
-            elif cell == 3:
-                print("\033[36m🮿 \033[0m", end="")  # red block
-            elif cell == 4:
-                print("\033[32m▞▞\033[0m" ,end="")  # invis
-        print()
+class block:
+    """
+    This class is for each block in the maze to be displayed
+    """
+    def __init__(self, mmlx, mlx_ptr, win_ptr, info, size, offset, color):
+        self.i = info
+        self.s = size
+        self.o = offset
+        self.c = color
+        self.mp = mlx_ptr
+        self.wp = win_ptr
+        self.m = mmlx
+
+    def draw(self):
+        if (self.i & 1):  # EAST
+            for y in range(self.o[1], self.o[1] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, self.o[0] + self.s, y, self.c)
+        if (self.i & 2):  # NORTH
+            for x in range(self.o[0], self.o[0] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, x, self.o[1], self.c)
+        if (self.i & 4):  # WEST
+            for y in range(self.o[1], self.o[1] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, self.o[0], y, self.c)
+        if (self.i & 8):  # SOUTH
+            for x in range(self.o[0], self.o[0] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, x, self.o[1] + self.s, self.c)
+        if (self.i & 16):
+            for x in range(self.o[0] + 1, self.o[0] + self.s - 1):
+                for y in range(self.o[1] + 1, self.o[1] + self.s - 1):
+                    self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x0000FF)
+        if (self.i & 32):
+            for x in range(self.o[0] + 1, self.o[0] + self.s - 1):
+                for y in range(self.o[1] + 1, self.o[1] + self.s - 1):
+                    self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x00FF00)
+
+    def animate(self):
+        for i in range(self.o[0], self.o[0] + self.s):
+            for j in range(self.o[1], self.o[1] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
+            time.sleep((1) / (self.s * (j + 1)))
+
+    def clear(self):
+        for i in range(self.o[0], self.o[0] + self.s):
+            for j in range(self.o[1], self.o[1] + self.s):
+                self.m.mlx_pixel_put(self.mp, self.wp, i, j, int((j + i)/4))
 
 
 def main():
@@ -175,7 +122,6 @@ def main():
 
     start_pos = [0, 0]
     end_pos = [0, 0]
-
 
     file = open("config.txt", "r")
 
@@ -201,30 +147,41 @@ def main():
 
     maze = [[0]*width for _ in range(height)]
     maze = generate_maze(width, height)
-    """maze[1][1] = 15
-    maze[2][1] = 15
-    maze[3][1] = 15
-    maze[3][2] = 15
-    maze[3][3] = 15
-    maze[4][3] = 15
-    maze[5][3] = 15
-    maze[5][5] = 15
-    maze[5][6] = 15
-    maze[5][7] = 15
-    maze[4][5] = 15
-    maze[3][5] = 15
-    maze[3][6] = 15
-    maze[3][7] = 15
-    maze[2][7] = 15
-    maze[1][7] = 15
-    maze[1][5] = 15
-    maze[1][6] = 15"""
-    new_maze = convert(maze, width, height)
-    new_maze[(start_pos[0] * 3) + 1][(start_pos[1] * 3) + 1] = 2
-    new_maze[(end_pos[0] * 3) + 1][(end_pos[1] * 3) + 1] = 3
-    display_maze(new_maze)
-    path = solve_maze(maze, width, height, start_pos, end_pos)
-    print(path)
+
+    maze[start_pos[0]][start_pos[1]] = maze[start_pos[0]][start_pos[1]] | 16
+    maze[end_pos[0]][end_pos[1]] = maze[end_pos[0]][end_pos[1]] | 32
+
+    for row in maze:
+        print(row)
+
+    mlx = Mlx()
+    mlx_ptr = mlx.mlx_init()
+    if not mlx_ptr:
+        print("MLX init failed")
+        os._exit(1)
+
+    size = 25
+
+    win_ptr = mlx.mlx_new_window(mlx_ptr, (width * size) + 1, (height * size) + 1, "MLX Test")
+
+    for i in range(0, height):
+        for j in range(0, width):
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
+            b.animate()
+            b.clear()
+            b.draw()
+
+    # Draw a string
+    mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE")
+
+
+    def close_window(keycode, param):
+        if keycode == ESC:
+            mlx.mlx_destroy_window(mlx_ptr, win_ptr)
+            os._exit(0)
+
+    mlx.mlx_key_hook(win_ptr, close_window, None)
+    mlx.mlx_loop(mlx_ptr)
     file.close()
 
 
