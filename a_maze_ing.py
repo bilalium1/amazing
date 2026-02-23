@@ -18,6 +18,7 @@ E, N, W, S = 1, 2, 4, 8
 DX = {E: 1, W: -1, N: 0, S: 0}
 DY = {E: 0, W: 0, N: -1, S: 1}
 
+
 OPP = {E: W, W: E, N: S, S: N}
 
 
@@ -60,6 +61,7 @@ def generate_maze_it(w, h):
         maze[y][x] = maze[y][x] | 64  # set block as visited
 
         dirs = [E, N, W, S]
+        [N, E , W, S]
         random.shuffle(dirs)
 
         for d in dirs:
@@ -141,10 +143,10 @@ class block:
             for j in range(self.o[1], self.o[1] + self.s):
                 self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
 
-    def clear(self):
+    def clear(self, color):
         for i in range(self.o[0], self.o[0] + self.s):
             for j in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, i, j, 0x330055)
+                self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
 
 
 def main():
@@ -213,17 +215,25 @@ def main():
 
     while (loops < limit):
         for j in range(loops, width - loops):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAFFFF)
+            b.animate()
+            b.clear(0x222255)
             b.draw()
         for i in range(loops, height - loops):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0x2255AA)
+            b.animate()
+            b.clear(0x050510)
             b.draw()
         for j in range(width-loops-1, loops, -1):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0x222255)
+            b.animate()
+            b.clear(0x050510)
             b.draw()
         j -= 1
         for i in range(height-loops-1, loops, -1):
             b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b.animate()
+            b.clear(0x222255)
             b.draw()
         loops += 1
         i = loops
