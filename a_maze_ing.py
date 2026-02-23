@@ -1,14 +1,17 @@
 # 0000
 # swne
 
-from mlx import Mlx
+from mlx.init import Mlx
 import random
 import os
 import time
+import sys
 
 ESC = 65307  # X11 ESC KEYCODE
 
 fps = 60
+
+sys.setrecursionlimit(10000)
 
 E, N, W, S = 1, 2, 4, 8
 
@@ -20,10 +23,9 @@ OPP = {E: W, W: E, N: S, S: N}
 
 def generate_maze(w, h):
     maze = [[15 for _ in range(w)] for _ in range(h)]  # all walls closed
-    visited = [[False]*w for _ in range(h)]
 
     def dfs(x, y):
-        visited[y][x] = True
+        maze[y][x] = maze[y][x] | 64  # set block as visited
 
         dirs = [E, N, W, S]
         random.shuffle(dirs)
@@ -32,7 +34,7 @@ def generate_maze(w, h):
             nx = x + DX[d]
             ny = y + DY[d]
 
-            if 0 <= nx < w and 0 <= ny < h and not visited[ny][nx]:
+            if 0 <= nx < w and 0 <= ny < h and not (maze[ny][nx] & 64):
                 # remove wall
                 maze[y][x] ^= d
                 maze[ny][nx] ^= OPP[d]
@@ -40,6 +42,47 @@ def generate_maze(w, h):
                 dfs(nx, ny)
 
     dfs(0, 0)
+    return maze
+
+
+def check_maze(maze: list[list[int]], w: int, h: int):
+    for y in range(0, h):
+        for x in range(0, w):
+            if (maze[y][x] & 15):
+                return False
+    return True
+
+
+def generate_maze_it(w, h):
+    maze = [[15 for _ in range(w)] for _ in range(h)]  # all walls closed
+
+    def dfs(x, y):
+        maze[y][x] = maze[y][x] | 64  # set block as visited
+
+        dirs = [E, N, W, S]
+        random.shuffle(dirs)
+
+        for d in dirs:
+            nx = x + DX[d]
+            ny = y + DY[d]
+
+            if 0 <= nx < w and 0 <= ny < h and not (maze[ny][nx] & 64):
+                # remove wall
+                maze[y][x] ^= d
+                maze[ny][nx] ^= OPP[d]
+
+                return (nx, ny)
+        return (-1, -1)
+
+    stack = [(0, 0)]
+    while stack:
+        x, y = stack[-1]
+        nx, ny = dfs(x, y)
+        if nx == -1:
+            stack.pop()
+        else:
+            stack.append((nx, ny))
+
     return maze
 
 
@@ -53,16 +96,6 @@ def display(maze: list[list[int]], w: int, h: int):
             print(hex[maze[i][j]], end="")
             j += 1
         print("")
-        i += 1
-
-
-def gen_maze(maze: list[list[int]], w: int, h: int):
-    i = 0
-    while (i < h):
-        j = 0
-        while (j < w):
-            maze[i][j] = random.randint(0, 15)
-            j += 1
         i += 1
 
 # BLOCK CLASS
@@ -95,24 +128,23 @@ class block:
             for x in range(self.o[0], self.o[0] + self.s):
                 self.m.mlx_pixel_put(self.mp, self.wp, x, self.o[1] + self.s, self.c)
         if (self.i & 16):
-            for x in range(self.o[0] + 1, self.o[0] + self.s - 1):
-                for y in range(self.o[1] + 1, self.o[1] + self.s - 1):
+            for x in range(self.o[0] + 1, self.o[0] + self.s):
+                for y in range(self.o[1] + 1, self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x0000FF)
         if (self.i & 32):
-            for x in range(self.o[0] + 1, self.o[0] + self.s - 1):
-                for y in range(self.o[1] + 1, self.o[1] + self.s - 1):
+            for x in range(self.o[0] + 1, self.o[0] + self.s):
+                for y in range(self.o[1] + 1, self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x00FF00)
 
     def animate(self):
         for i in range(self.o[0], self.o[0] + self.s):
             for j in range(self.o[1], self.o[1] + self.s):
                 self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
-            time.sleep((1) / (self.s * (j + 1)))
 
     def clear(self):
         for i in range(self.o[0], self.o[0] + self.s):
             for j in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, i, j, int((j + i)/4))
+                self.m.mlx_pixel_put(self.mp, self.wp, i, j, 0x330055)
 
 
 def main():
@@ -129,6 +161,8 @@ def main():
     lines = content.split("\n")
     for line in lines:
         sep = line.split("=")
+        if sep[0] == "BLOCK_SIZE":
+            size = int(sep[1])
         if sep[0] == "WIDTH":
             width = int(sep[1])
         elif sep[0] == "HEIGHT":
@@ -142,11 +176,17 @@ def main():
             end_pos[0] = int(sep2[0])
             end_pos[1] = int(sep2[1])
 
+    while (size * height > 1015):
+        size -= 1
+
+    while (size * width > 1900):
+        size -= 1
+
     print(f"width :{width}")
     print(f"height :{height}")
 
     maze = [[0]*width for _ in range(height)]
-    maze = generate_maze(width, height)
+    maze = generate_maze_it(width, height)
 
     maze[start_pos[0]][start_pos[1]] = maze[start_pos[0]][start_pos[1]] | 16
     maze[end_pos[0]][end_pos[1]] = maze[end_pos[0]][end_pos[1]] | 32
@@ -160,16 +200,34 @@ def main():
         print("MLX init failed")
         os._exit(1)
 
-    size = 25
+    window_x = (width * size) + 1
+    window_y = (height * size) + 1
 
-    win_ptr = mlx.mlx_new_window(mlx_ptr, (width * size) + 1, (height * size) + 1, "MLX Test")
+    win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "MLX Test")
 
-    for i in range(0, height):
-        for j in range(0, width):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
-            b.animate()
-            b.clear()
+    i = 0
+    j = 0
+
+    loops = 0
+    limit = (height * width) / 4 
+
+    while (loops < limit):
+        for j in range(loops, width - loops):
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
             b.draw()
+        for i in range(loops, height - loops):
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b.draw()
+        for j in range(width-loops-1, loops, -1):
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b.draw()
+        j -= 1
+        for i in range(height-loops-1, loops, -1):
+            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xAAAAFF)
+            b.draw()
+        loops += 1
+        i = loops
+        j = loops
 
     # Draw a string
     mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE")
