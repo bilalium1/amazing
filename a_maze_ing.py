@@ -7,6 +7,7 @@ import os
 import time
 
 ESC = 65307  # X11 ESC KEYCODE
+KEY_R = 27
 
 fps = 60
 
@@ -92,15 +93,6 @@ def display(maze: list[list[int]], w: int, h: int):
         print("")
         i += 1
 
-
-# st (10, 2)
-# 42 (5, 0)
-# 0 <=  <= 6
-# 8 - (6 - 1) - 1 = 8
-
-# BLOCK CLASS
-
-
 class block:
     """
     This class is for each block in the maze to be displayed
@@ -170,6 +162,41 @@ def display_line(info, maze, hv, i, j, st, ed, color, bg_color):
             b.draw()
 
 
+def draw_maze(maze_info, maze, width, height, color_offset):
+
+    i = 0
+    j = 0
+
+    loops = 0
+    sub_limit = min((height) / 2.5, (width) / 2.5)
+    limit = min((height) / 2, (width) / 2)
+
+    while (loops < sub_limit):
+        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xAAFFFF + color_offset, 0x222255)
+        j = width - loops - 1
+        display_line(maze_info, maze, False, i, j, loops, height - loops, 0x2255AA + color_offset, 0x050510)
+        i = height - loops - 1
+        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0x222255 + color_offset, 0x050510)
+        j = loops
+        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xAAAAFF + color_offset, 0x222255)
+        loops += 1
+        print(loops)
+        i = loops
+        j = loops
+
+    while (loops < limit):
+        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xFFFFFF, 0x000000)
+        j = width - loops - 1
+        display_line(maze_info, maze, False, i, j, loops, height - loops, 0xFFFFFF, 0x000000)
+        i = height - loops - 1
+        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0xFFFFFF, 0x000000)
+        j = loops
+        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xFFFFFF, 0x000000)
+        loops += 1
+        i = loops
+        j = loops
+
+
 def main():
 
     width = 0
@@ -228,14 +255,8 @@ def main():
 
     win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "MLX Test")
 
-    loops = 0
-    sub_limit = min((height) / 2.5, (width) / 2.5)
-    limit = min((height) / 2, (width) / 2)
-
     mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 35, int(window_y / 2) + 5, 0x0055AA, "M.S.I.M.N.A.T")
     mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 10, int(window_y / 2) + 20, 0x0055AA, "MAZE")
-
-    print(sub_limit)
 
     # maze, size, mlx, mlx_ptr, win_ptr, i, j, st, ed, color
 
@@ -246,42 +267,24 @@ def main():
         "wptr": win_ptr,
     }
 
-    i = 0
-    j = 0
-
-    while (loops < sub_limit):
-        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xAAFFFF, 0x222255)
-        j = width - loops - 1
-        display_line(maze_info, maze, False, i, j, loops, height - loops, 0x2255AA, 0x050510)
-        i = height - loops - 1
-        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0x222255, 0x050510)
-        j = loops
-        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xAAAAFF, 0x222255)
-        loops += 1
-        print(loops)
-        i = loops
-        j = loops
-
-    while (loops < limit):
-        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xFFFFFF, 0x000000)
-        j = width - loops - 1
-        display_line(maze_info, maze, False, i, j, loops, height - loops, 0xFFFFFF, 0x000000)
-        i = height - loops - 1
-        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0xFFFFFF, 0x000000)
-        j = loops
-        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xFFFFFF, 0x000000)
-        loops += 1
-        i = loops
-        j = loops
+    draw_maze(maze_info, maze, width, height, 0)
 
     # Draw a string
     mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE")
+
+    time.sleep(0.5)
+    draw_maze(maze_info, maze, width, height, 20)
+    draw_maze(maze_info, maze, width, height, 50)
 
 
     def close_window(keycode, param):
         if keycode == ESC:
             mlx.mlx_destroy_window(mlx_ptr, win_ptr)
             os._exit(0)
+        if keycode == KEY_R:
+            print("5")
+            draw_maze(maze_info, maze, width, height, 20)
+
 
     mlx.mlx_key_hook(win_ptr, close_window, None)
     mlx.mlx_loop(mlx_ptr)
