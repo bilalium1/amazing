@@ -5,13 +5,10 @@ from mlx.init import Mlx
 import random
 import os
 import time
-import sys
 
 ESC = 65307  # X11 ESC KEYCODE
 
 fps = 60
-
-sys.setrecursionlimit(10000)
 
 E, N, W, S = 1, 2, 4, 8
 
@@ -21,14 +18,22 @@ DY = {E: 0, W: 0, N: -1, S: 1}
 
 OPP = {E: W, W: E, N: S, S: N}
 
-def generate_maze_it(w, h):
-    maze = [[15 for _ in range(w)] for _ in range(h)]  # all walls closed
+
+def DFS(w: int, h: int):
+    """
+    This is a function that generates 2d array of integers
+    ranging from 0 to 15, each bit in every integers refers
+    to the walls of each block in the maze
+
+    :param w: width of the maze
+    :param h: height of the maze
+    """
+    maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
 
     def dfs(x, y):
         maze[y][x] = maze[y][x] | 64  # set block as visited
 
         dirs = [E, N, W, S]
-        [N, E , W, S]
         random.shuffle(dirs)
 
         for d in dirs:
@@ -204,7 +209,7 @@ def main():
     print(f"height :{height}")
 
     maze = [[0]*width for _ in range(height)]
-    maze = generate_maze_it(width, height)
+    maze = DFS(width, height)
 
     maze[start_pos[0]][start_pos[1]] = maze[start_pos[0]][start_pos[1]] | 16
     maze[end_pos[0]][end_pos[1]] = maze[end_pos[0]][end_pos[1]] | 32
