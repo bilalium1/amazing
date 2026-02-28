@@ -135,6 +135,7 @@ class block:
         for i in range(self.o[0], self.o[0] + self.s):
             for j in range(self.o[1], self.o[1] + self.s):
                 self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
+            time.sleep(0.01)
 
     def clear(self, color):
         for i in range(self.o[0], self.o[0] + self.s):
@@ -149,6 +150,8 @@ def display_line(info, maze, hv, i, j, st, ed, color, bg_color):
         inc = 1
     else:
         inc = -1
+
+    print(inc)
 
     if (hv):
         for j in range(st, ed, inc):
@@ -220,9 +223,6 @@ def main():
 
     win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "MLX Test")
 
-    i = 0
-    j = 0
-
     loops = 0
     sub_limit = min((height) / 2.5, (width) / 2.5)
     limit = min((height) / 2, (width) / 2)
@@ -246,9 +246,11 @@ def main():
 
     while (loops < sub_limit):
         display_line(maze_info, maze, True, i, j, loops, width - loops, 0xAAFFFF, 0x222255)
+        j = width - loops - 1
         display_line(maze_info, maze, False, i, j, loops, height - loops, 0x2255AA, 0x050510)
+        i = height - loops - 1
         display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0x222255, 0x050510)
-        j -= 1
+        j = loops
         display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xAAAAFF, 0x222255)
         loops += 1
         print(loops)
@@ -256,23 +258,13 @@ def main():
         j = loops
 
     while (loops < limit):
-        for j in range(loops, width - loops):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
-            b.clear(0x000000)
-            b.draw()
-        for i in range(loops, height - loops):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
-            b.clear(0x000000)
-            b.draw()
-        for j in range(width-loops-1, loops, -1):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
-            b.clear(0x000000)
-            b.draw()
-        j -= 1
-        for i in range(height-loops-1, loops, -1):
-            b = block(mlx, mlx_ptr, win_ptr, maze[i][j], size, (j * size, i * size), 0xFFFFFF)
-            b.clear(0x000000)
-            b.draw()
+        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xFFFFFF, 0x000000)
+        j = width - loops - 1
+        display_line(maze_info, maze, False, i, j, loops, height - loops, 0xFFFFFF, 0x000000)
+        i = height - loops - 1
+        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0xFFFFFF, 0x000000)
+        j = loops
+        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xFFFFFF, 0x000000)
         loops += 1
         i = loops
         j = loops
