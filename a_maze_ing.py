@@ -1,200 +1,16 @@
 # 0000
 # swne
 
+from maze_gen import MazeGen
+from maze_show import MazeShow
 from mlx.init import Mlx
 import random
 import os
-import time
 
 ESC = 65307  # X11 ESC KEYCODE
-KEY_R = 27
+KEY_R = 114
 
 fps = 60
-
-E, N, W, S = 1, 2, 4, 8
-
-DX = {E: 1, W: -1, N: 0, S: 0}
-DY = {E: 0, W: 0, N: -1, S: 1}
-
-
-OPP = {E: W, W: E, N: S, S: N}
-
-
-def DFS(w: int, h: int):
-    """
-    This is a function that generates 2d array of integers
-    ranging from 0 to 15, each bit in every integers refers
-    to the walls of each block in the maze
-
-    :param w: width of the maze
-    :param h: height of the maze
-    """
-    maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
-
-    def dfs(x, y):
-        maze[y][x] = maze[y][x] | 64  # set block as visited
-
-        dirs = [E, N, W, S]
-        random.shuffle(dirs)
-
-        for d in dirs:
-            nx = x + DX[d]
-            ny = y + DY[d]
-
-            if 0 <= nx < w and 0 <= ny < h and not (maze[ny][nx] & 64):
-                # remove wall
-                maze[y][x] ^= d
-                maze[ny][nx] ^= OPP[d]
-
-                return (nx, ny)
-        return (-1, -1)
-
-    stack = [(0, 0)]
-    while stack:
-        x, y = stack[-1]
-        nx, ny = dfs(x, y)
-        if nx == -1:
-            stack.pop()
-        else:
-            stack.append((nx, ny))
-
-    return maze
-
-
-def add_42(maze: list[list[int]], w: int, h: int, st: tuple, end: tuple):
-    # dimensions x: 7 y : 6
-    # see if it overlaps with start/end pos
-    center = (int(w / 2), int(h / 2))
-    zone_42 = (center[0] - 3, center[1] - 3)
-
-    def display_42():
-        for y in range(0, 5):
-            for x in range(0, 6):
-                if (x % 2 == 0 and y & 2 == 0):
-                    maze[y][x] &= 128
-
-    if (zone_42[0] <= st[0] <= zone_42[0] + 6):
-        if (zone_42[0] + (st[0] - zone_42[0] + 1) + 6 <= w):
-            zone_42[0] = st[0] - zone_42[0] + 1
-        elif (zone_42[0] - (zone_42[0] + 7 - st[0] - 1) >= 0):
-            zone_42[0] = zone_42[0] - 1
-    pass
-
-
-def display(maze: list[list[int]], w: int, h: int):
-
-    hex = "0123456789ABCDEF"
-    i = 0
-    while (i < h):
-        j = 0
-        while (j < w):
-            print(hex[maze[i][j]], end="")
-            j += 1
-        print("")
-        i += 1
-
-class block:
-    """
-    This class is for each block in the maze to be displayed
-    """
-    def __init__(self, mmlx, mlx_ptr, win_ptr, info, size, offset, color):
-        self.i = info
-        self.s = size
-        self.o = offset
-        self.c = color
-        self.mp = mlx_ptr
-        self.wp = win_ptr
-        self.m = mmlx
-
-    def draw(self):
-        if (self.i & 1):  # EAST
-            for y in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, self.o[0] + self.s, y, self.c)
-        if (self.i & 2):  # NORTH
-            for x in range(self.o[0], self.o[0] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, x, self.o[1], self.c)
-        if (self.i & 4):  # WEST
-            for y in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, self.o[0], y, self.c)
-        if (self.i & 8):  # SOUTH
-            for x in range(self.o[0], self.o[0] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, x, self.o[1] + self.s, self.c)
-        if (self.i & 16):
-            for x in range(self.o[0] + 1, self.o[0] + self.s):
-                for y in range(self.o[1] + 1, self.o[1] + self.s):
-                    self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x0000FF)
-        if (self.i & 32):
-            for x in range(self.o[0] + 1, self.o[0] + self.s):
-                for y in range(self.o[1] + 1, self.o[1] + self.s):
-                    self.m.mlx_pixel_put(self.mp, self.wp, x, y, 0x00FF00)
-
-    def animate(self):
-        for i in range(self.o[0], self.o[0] + self.s):
-            for j in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
-            time.sleep(0.01)
-
-    def clear(self, color):
-        for i in range(self.o[0], self.o[0] + self.s):
-            for j in range(self.o[1], self.o[1] + self.s):
-                self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
-
-
-def display_line(info, maze, hv, i, j, st, ed, color, bg_color):
-
-    inc = 1
-    if st <= ed:
-        inc = 1
-    else:
-        inc = -1
-
-    print(inc)
-
-    if (hv):
-        for j in range(st, ed, inc):
-            b = block(info['mlx'], info['mptr'], info['wptr'], maze[i][j], info['size'], (j * info['size'], i * info['size']), color)
-            b.clear(bg_color)
-            b.draw()
-    else:
-        for i in range(st, ed, inc):
-            b = block(info['mlx'], info['mptr'], info['wptr'], maze[i][j], info['size'], (j * info['size'], i * info['size']), color)
-            b.clear(bg_color)
-            b.draw()
-
-
-def draw_maze(maze_info, maze, width, height, color_offset):
-
-    i = 0
-    j = 0
-
-    loops = 0
-    sub_limit = min((height) / 2.5, (width) / 2.5)
-    limit = min((height) / 2, (width) / 2)
-
-    while (loops < sub_limit):
-        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xAAFFFF + color_offset, 0x222255)
-        j = width - loops - 1
-        display_line(maze_info, maze, False, i, j, loops, height - loops, 0x2255AA + color_offset, 0x050510)
-        i = height - loops - 1
-        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0x222255 + color_offset, 0x050510)
-        j = loops
-        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xAAAAFF + color_offset, 0x222255)
-        loops += 1
-        print(loops)
-        i = loops
-        j = loops
-
-    while (loops < limit):
-        display_line(maze_info, maze, True, i, j, loops, width - loops, 0xFFFFFF, 0x000000)
-        j = width - loops - 1
-        display_line(maze_info, maze, False, i, j, loops, height - loops, 0xFFFFFF, 0x000000)
-        i = height - loops - 1
-        display_line(maze_info, maze, True, i, j, width-loops-1, loops, 0xFFFFFF, 0x000000)
-        j = loops
-        display_line(maze_info, maze, False, i, j, height-loops-1, loops, 0xFFFFFF, 0x000000)
-        loops += 1
-        i = loops
-        j = loops
 
 
 def main():
@@ -232,11 +48,9 @@ def main():
     while (size * width > 1900):
         size -= 1
 
-    print(f"width :{width}")
-    print(f"height :{height}")
-
-    maze = [[0]*width for _ in range(height)]
-    maze = DFS(width, height)
+    mg = MazeGen.MazeGen()
+    ms = MazeShow.MazeShow()
+    maze = mg.DFS(width, height, start_pos, end_pos, False, False)
 
     maze[start_pos[0]][start_pos[1]] = maze[start_pos[0]][start_pos[1]] | 16
     maze[end_pos[0]][end_pos[1]] = maze[end_pos[0]][end_pos[1]] | 32
@@ -267,24 +81,20 @@ def main():
         "wptr": win_ptr,
     }
 
-    draw_maze(maze_info, maze, width, height, 0)
+    ms.draw_maze(maze_info, maze, width, height, 0)
 
     # Draw a string
     mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE")
-
-    time.sleep(0.5)
-    draw_maze(maze_info, maze, width, height, 20)
-    draw_maze(maze_info, maze, width, height, 50)
-
 
     def close_window(keycode, param):
         if keycode == ESC:
             mlx.mlx_destroy_window(mlx_ptr, win_ptr)
             os._exit(0)
         if keycode == KEY_R:
-            print("5")
-            draw_maze(maze_info, maze, width, height, 20)
-
+            colors = (0x000001, 0x000100, 0x010000)
+            ms.draw_maze(maze_info, maze, width,
+                         height,
+                         colors[random.randint(0, 2)] * random.randint(25, 99))
 
     mlx.mlx_key_hook(win_ptr, close_window, None)
     mlx.mlx_loop(mlx_ptr)
