@@ -13,50 +13,67 @@ KEY_R = 114
 fps = 60
 
 
-def main():
-
-    width = 0
-    height = 0
-
-    start_pos = [0, 0]
-    end_pos = [0, 0]
-
+def parsing() -> dict:
     file = open("config.txt", "r")
 
-    content = file.read()
-    lines = content.split("\n")
-    for line in lines:
-        sep = line.split("=")
-        if sep[0] == "BLOCK_SIZE":
-            size = int(sep[1])
-        if sep[0] == "WIDTH":
-            width = int(sep[1])
-        elif sep[0] == "HEIGHT":
-            height = int(sep[1])
-        elif sep[0] == "ENTRY":
-            sep2 = sep[1].split(",")
-            start_pos[0] = int(sep2[0])
-            start_pos[1] = int(sep2[1])
-        elif sep[0] == "EXIT":
-            sep2 = sep[1].split(",")
-            end_pos[0] = int(sep2[0])
-            end_pos[1] = int(sep2[1])
+    d = {}
+    for line in file.read().split("\n"):
+        if len(line.split("=")) < 2:
+            continue
+        key = line.split("=")[0].strip()
+        val = line.split("=")[1]
+        if (key in ["WIDTH", "HEIGHT", "BLOCK_SIZE", "SEED"]):
+            try:
+                val = int(val)
+            except ValueError:
+                raise ValueError(f"Invalid value for {key}.")
+            if val < 0:
+                raise ValueError(f"Negative Value for {key}.")
+        elif (key in ["ENTRY", "EXIT"]):
+            try:
+                val = (int(val.split(",")[0]), int(val.split(",")[1]))
+            except ValueError:
+                raise ValueError(f"Invalid Value for {key}")
+            x, y = val
+            if x < 0 or y < 0:
+                raise ValueError(f"Negative coordinates for {key}.")
+        elif (key in ["PERFECT"]):
+            val = bool(val)
+        d.update({key: val})
+    file.close()
 
-    while (size * height > 1015):
-        size -= 1
+    man = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
+    if set(d.keys()).intersection(man) != man:
+        raise Exception(f"Mandatory argument(s) missing. {man - set(d.keys()).intersection(man)}")
 
-    while (size * width > 1900):
-        size -= 1
+    return d
+
+
+def main():
+
+    config = {}
+    try:
+        config = parsing()
+    except Exception as e:
+        print("Error :", e)
+        return
+
+    while (config["BLOCK_SIZE"] * config["HEIGHT"] > 1015):
+        config["BLOCK_SIZE"] -= 1
+
+    while (config["BLOCK_SIZE"] * config["WIDTH"] > 1900):
+        config["BLOCK_SIZE"] -= 1
 
     mg = MazeGen.MazeGen()
     ms = MazeShow.MazeShow()
-    maze = mg.DFS(width, height, start_pos, end_pos, False, False)
 
-    maze[start_pos[0]][start_pos[1]] = maze[start_pos[0]][start_pos[1]] | 16
-    maze[end_pos[0]][end_pos[1]] = maze[end_pos[0]][end_pos[1]] | 32
+    maze = mg.DFS(config["WIDTH"], config["HEIGHT"], config["ENTRY"],
+                  config["EXIT"], True, False, config["SEED"])
 
-    for row in maze:
-        print(row)
+    mg.output(maze, config["WIDTH"], config["HEIGHT"], config["OUTPUT_FILE"])
+
+    maze[config["ENTRY"][0]][config["ENTRY"][1]] |= 16
+    maze[config["EXIT"][0]][config["EXIT"][1]] |= 32
 
     mlx = Mlx()
     mlx_ptr = mlx.mlx_init()
@@ -64,27 +81,26 @@ def main():
         print("MLX init failed")
         os._exit(1)
 
-    window_x = (width * size) + 1
-    window_y = (height * size) + 1
+    window_x = (config["WIDTH"] * config["BLOCK_SIZE"]) + 1
+    window_y = (config["HEIGHT"] * config["BLOCK_SIZE"]) + 1
 
     win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "MLX Test")
 
-    mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 35, int(window_y / 2) + 5, 0x0055AA, "M.S.I.M.N.A.T")
-    mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 10, int(window_y / 2) + 20, 0x0055AA, "MAZE")
+    mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 35,
+                       int(window_y / 2) + 5, 0x0055AA, "M.S.I.M.N.A.T")
+    mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 10,
+                       int(window_y / 2) + 20, 0x0055AA, "MAZE")
 
     # maze, size, mlx, mlx_ptr, win_ptr, i, j, st, ed, color
 
     maze_info = {
         "mlx": mlx,
-        "size": size,
+        "size": config["BLOCK_SIZE"],
         "mptr": mlx_ptr,
         "wptr": win_ptr,
     }
 
-    ms.draw_maze(maze_info, maze, width, height, 0)
-
-    # Draw a string
-    mlx.mlx_string_put(mlx_ptr, win_ptr, 300, 20, 0xFF0000, "MAZE")
+    ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"], 0)
 
     def close_window(keycode, param):
         if keycode == ESC:
@@ -92,13 +108,12 @@ def main():
             os._exit(0)
         if keycode == KEY_R:
             colors = (0x000001, 0x000100, 0x010000)
-            ms.draw_maze(maze_info, maze, width,
-                         height,
+            ms.draw_maze(maze_info, maze, config["WIDTH"],
+                         config["HEIGHT"],
                          colors[random.randint(0, 2)] * random.randint(25, 99))
 
     mlx.mlx_key_hook(win_ptr, close_window, None)
     mlx.mlx_loop(mlx_ptr)
-    file.close()
 
 
 if __name__ == "__main__":

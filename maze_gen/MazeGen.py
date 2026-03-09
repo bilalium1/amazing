@@ -48,7 +48,7 @@ class MazeGen():
 
         display_42()
 
-    def DFS(self, w: int, h: int, sp, ep, w42: bool, pfct: bool):
+    def DFS(self, w: int, h: int, sp, ep, w42: bool, pfct: bool, seed: int):
         """
         This is a function that generates 2d array of integers
         ranging from 0 to 15, each bit in every integers refers
@@ -57,6 +57,10 @@ class MazeGen():
         :param w: width of the maze
         :param h: height of the maze
         """
+        if seed == 0:
+            random.seed()
+        else:
+            random.seed("=")
         maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
         if w42:
             self.add_42(maze, w, h, sp, ep)
@@ -103,13 +107,15 @@ class MazeGen():
 
         return maze
 
-    def display(maze: list[list[int]], w: int, h: int):
+    def output(self, maze: list[list[int]], w: int, h: int, out_file: str):
+        file = open(out_file, "w")
+
         hex = "0123456789ABCDEF"
         i = 0
         while (i < h):
             j = 0
             while (j < w):
-                print(hex[maze[i][j]], end="")
+                file.write(hex[maze[i][j] & 15])
                 j += 1
-            print("")
+            file.write("\n")
             i += 1
