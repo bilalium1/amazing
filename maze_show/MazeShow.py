@@ -25,19 +25,19 @@ class MazeShow():
             self.m = mmlx
 
         def draw(self):
-            if (self.i & 1):  # EAST
+            if (self.i & 8):  # EAST
                 for y in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp,
                                          self.o[0] + self.s, y, self.c)
-            if (self.i & 2):  # NORTH
+            if (self.i & 4):  # NORTH
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1], self.c)
-            if (self.i & 4):  # WEST
+            if (self.i & 2):  # WEST
                 for y in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp,
                                          self.o[0], y, self.c)
-            if (self.i & 8):  # SOUTH
+            if (self.i & 1):  # SOUTH
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1] + self.s, self.c)
@@ -54,7 +54,8 @@ class MazeShow():
 
         def path(self, color, margin):
             for i in range(self.o[0] + margin, self.o[0] + self.s - margin):
-                for j in range(self.o[1] + margin, self.o[1] + self.s - margin):
+                for j in range(self.o[1] + margin,
+                               self.o[1] + self.s - margin):
                     self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
 
         def line(self, color, previous, current, next):
@@ -67,23 +68,31 @@ class MazeShow():
                 if dp == 1:
                     if (curr[0] - prev[0] > 0):
                         for i in range(self.o[0], x_center):
-                            self.m.mlx_pixel_put(self.mp, self.wp, i, y_center, color)
-                            self.m.mlx_pixel_put(self.mp, self.wp, i, y_center + 1, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp, i,
+                                                 y_center, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp, i,
+                                                 y_center + 1, color)
 
                     else:
                         for i in range(self.o[0] + self.s, x_center, -1):
-                            self.m.mlx_pixel_put(self.mp, self.wp, i, y_center, color)
-                            self.m.mlx_pixel_put(self.mp, self.wp, i, y_center + 1, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp, i,
+                                                 y_center, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp, i,
+                                                 y_center + 1, color)
 
                 elif dp == -1:
                     if (curr[1] - prev[1] > 0):
                         for i in range(self.o[1], y_center, 1):
-                            self.m.mlx_pixel_put(self.mp, self.wp, x_center, i, color)
-                            self.m.mlx_pixel_put(self.mp, self.wp, x_center + 1, i, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp,
+                                                 x_center, i, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp,
+                                                 x_center + 1, i, color)
                     else:
                         for i in range(self.o[1] + self.s, y_center, -1):
-                            self.m.mlx_pixel_put(self.mp, self.wp, x_center, i, color)
-                            self.m.mlx_pixel_put(self.mp, self.wp, x_center + 1, i, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp,
+                                                 x_center, i, color)
+                            self.m.mlx_pixel_put(self.mp, self.wp,
+                                                 x_center + 1, i, color)
 
             draw_line(current, previous)
             draw_line(current, next)
@@ -164,14 +173,21 @@ class MazeShow():
         for i in path:
             coord = (i[0] * info["size"], i[1] * info["size"])
 
-            b = self.block(info["mlx"], info["mptr"], info["wptr"], 0, info["size"], coord, color)
+            b = self.block(info["mlx"], info["mptr"], info["wptr"], 0,
+                           info["size"], coord, color)
             for j in range(5, 2, -1):
                 b.path(FOREGROUND, j)
 
-    def draw_path2(self, path: list[tuple], info, color):
+    def draw_path2(self, path: list[tuple], info, de: bool):
+
+        if de:
+            color = COLOR_42
+        else:
+            color = BACKGROUND
 
         for i in range(1, len(path) - 1):
             coord = (path[i][0] * info["size"], path[i][1] * info["size"])
 
-            b = self.block(info["mlx"], info["mptr"], info["wptr"], 0, info["size"], coord, FOREGROUND)
-            b.line(COLOR_42, path[i - 1], path[i], path[i + 1])
+            b = self.block(info["mlx"], info["mptr"], info["wptr"], 0,
+                           info["size"], coord, FOREGROUND)
+            b.line(color, path[i - 1], path[i], path[i + 1])
