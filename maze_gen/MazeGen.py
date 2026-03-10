@@ -1,7 +1,7 @@
 import random
 from collections import deque
 
-E, N, W, S = 1, 2, 4, 8
+S, W, N, E = 1, 2, 4, 8
 
 DX = {E: 1, W: -1, N: 0, S: 0}
 DY = {E: 0, W: 0, N: -1, S: 1}
@@ -24,11 +24,15 @@ class MazeGen():
 
         for pos in (st, end):
             if overlaps(pos):
-                zone_42[0] = min(w - 7, pos[0] + 1)
-                zone_42[1] = min(h - 7, pos[1] + 1)
+                # decide direction relative to zone center
+                zx = zone_42[0] + 3
+                zy = zone_42[1] + 3
 
-        zone_42[0] = max(0, min(zone_42[0], w - 7))
-        zone_42[1] = max(0, min(zone_42[1], h - 7))
+                dx = -1 if pos[0] > zx else 1
+                dy = -1 if pos[1] > zy else 1
+
+                zone_42[0] = max(0, min(w - 7, zone_42[0] + dx))
+                zone_42[1] = max(0, min(h - 7, zone_42[1] + dy))
 
         def display_42():
             # 4
@@ -69,7 +73,7 @@ class MazeGen():
         def dfs(x, y):
             maze[y][x] = maze[y][x] | 64  # set block as visited
 
-            dirs = [E, N, W, S]
+            dirs = [S, W, N, E]
             random.shuffle(dirs)
 
             for d in dirs:
@@ -96,7 +100,7 @@ class MazeGen():
         if not pfct:
             for _ in range((w * h) // 5):
                 x, y = random.randint(0, w-1), random.randint(0, h-1)
-                dirs = [E, N, W, S]
+                dirs = [S, W, N, E]
                 random.shuffle(dirs)
                 for d in dirs:
                     nx, ny = x + DX[d], y + DY[d]
@@ -111,17 +115,17 @@ class MazeGen():
 
         return maze
 
-    def bfs(self, maze: list[list[int]], h: int, w: int, start: tuple, end: tuple):
+    def bfs(self, maze: list[list[int]], h: int, w: int, start: tuple,
+            end: tuple):
         queue = deque([(start[0], start[1], [start])])
         visited = {start}
 
         while queue:
             x, y, path = queue.popleft()
-
             if (x, y) == end:
                 return path
 
-            for direction in [E, N, W, S]:
+            for direction in [S, W, N, E]:
                 # move if path is open
                 if (maze[y][x] & direction) == 0:
                     nx = x + DX[direction]
@@ -133,7 +137,8 @@ class MazeGen():
 
         return None
 
-    def output(self, maze: list[list[int]], w: int, h: int, out_file: str):
+    def output(self, maze: list[list[int]], w: int, h: int, st: tuple,
+               end: tuple, out_file: str):
         file = open(out_file, "w")
 
         hex = "0123456789ABCDEF"
@@ -145,3 +150,7 @@ class MazeGen():
                 j += 1
             file.write("\n")
             i += 1
+        file.write("\n")
+        file.write(str(st))
+        file.write("\n")
+        file.write(str(end))
