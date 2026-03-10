@@ -4,14 +4,18 @@
 from maze_gen import MazeGen
 from maze_show import MazeShow
 from mlx.init import Mlx
-import random
 import os
+import random
 from collections import deque
-import time
+
+broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0CA3]
+froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0]
+roll42 = [0xFF82A9, 0x7F95D1, 0x000000, 0xF7567C, 0xF72585]
 
 ESC = 65307  # X11 ESC KEYCODE
 KEY_R = 114
 KEY_S = 115
+KEY_C = 99
 fps = 60
 
 E, N, W, S = 1, 2, 4, 8
@@ -31,7 +35,7 @@ def parsing() -> dict:
             continue
         key = line.split("=")[0].strip()
         val = line.split("=")[1]
-        if (key in ["WIDTH", "HEIGHT", "BLOCK_SIZE", "SEED"]):
+        if (key in ["WIDTH", "HEIGHT", "BLOCK_SIZE"]):
             try:
                 val = int(val)
             except ValueError:
@@ -46,74 +50,30 @@ def parsing() -> dict:
             x, y = val
             if x < 0 or y < 0:
                 raise ValueError(f"Negative coordinates for {key}.")
-        elif (key in ["PERFECT"]):
-            val = bool(val)
+        elif (key in ["OUTPUT_FILE"]):
+            if not val:
+                raise ValueError(f"{key} must have a value.")
+        elif (key in ["PERFECT", "42"]):
+            if (val.lower() == "false"):
+                val = False
+            else:
+                val = True
         d.update({key: val})
     file.close()
 
+    # CHECK IF ANY MANDATORY CONFIGS ARE MISSING
     man = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
     if set(d.keys()).intersection(man) != man:
-        raise Exception(f"Mandatory argument(s) missing. {man - set(d.keys()).intersection(man)}")
+        raise Exception(f"Mandatory argument(s) missing."
+                        f"{man - set(d.keys()).intersection(man)}")
+
+    # CHECK FOR BORDERS
+    if d["ENTRY"][0] >= d["WIDTH"] or d["ENTRY"][1] >= d["HEIGHT"]:
+        raise ValueError("ENTRY Coordinates out of bounds.")
+    if d["EXIT"][0] >= d["WIDTH"] or d["EXIT"][1] >= d["HEIGHT"]:
+        raise ValueError("EXIT Coordinates out of bounds.")
 
     return d
-
-def bfs(maze: list[list[int]], h: int, w: int, start: tuple, end: tuple):
-    queue = deque([(start[0], start[1], [start])])
-    visited = set()
-    visited.add(start)
-
-    while queue:
-        x, y, path = queue.popleft()
-
-        if (x, y == end):
-            return path
-        for direction in [E, N, W, S]:
-            if ((maze[x][y] & direction) == 0): 
-                nx, ny = x + DX[direction], y + DY[direction]
-                #check the boundaries, we'll add the 42 boundaries too
-                if 0 <= nx < w and 0 <= ny < h and (nx, ny) not in visited:
-                    visited.add(nx, ny)
-                    new_path = list(path)
-                    new_path.append(nx, ny)
-                    queue.append(nx, ny, new_path)
-    return None
-
-
-def bfs_animated(maze_info, maze, w, h, start, end, ms):
-    queue = deque([(start[0], start[1], [start])])
-    visited = {(start[1], start[0])} # Use a set with the start tuple
-
-    while queue:
-        x, y, path = queue.popleft()
-
-        if (x, y) == end:
-            for px, py in path:
-                # Use ms.block to draw the final solution
-                b = ms.block(maze_info['mlx'], maze_info['mptr'], maze_info['wptr'], 
-                          maze[py][px], maze_info['size'], (px * maze_info['size'], py * maze_info['size']), 0x00FF00)
-                b.draw()
-            return path
-
-        for direction in [E, N, W, S]:
-            # Check if there's NO wall in this direction
-            if not (maze[y][x] & direction): 
-                nx, ny = x + DX[direction], y + DY[direction]
-                
-                # Boundary check and Visited check
-                if 0 <= nx < w and 0 <= ny < h and (nx, ny) not in visited:
-                    visited.add((ny, nx))
-                    
-                    # Optional: Draw the frontier in BLUE
-                    exploration_block = ms.block(maze_info['mlx'], maze_info['mptr'], maze_info['wptr'], 
-                                              maze[ny][nx], maze_info['size'], 
-                                              (nx * maze_info['size'], ny * maze_info['size']), 0x0000FF)
-                    exploration_block.draw()
-                    
-                    # Crucial: This allows the MLX window to update during the loop
-                    # time.sleep(0.01) 
-                    
-                    queue.append((ny, nx, path + [(ny, nx)]))
-    return None
 
 
 def main():
@@ -134,16 +94,20 @@ def main():
     mg = MazeGen.MazeGen()
     ms = MazeShow.MazeShow()
 
+    if not ("SEED" in config.keys()):
+        seed = 0
+    else:
+        seed = config["SEED"]
+
     maze = mg.DFS(config["WIDTH"], config["HEIGHT"], config["ENTRY"],
-                  config["EXIT"], True, False, config["SEED"])
+                  config["EXIT"], config["42"], config["PERFECT"], seed)
 
     mg.output(maze, config["WIDTH"], config["HEIGHT"], config["OUTPUT_FILE"])
 
-    maze[config["ENTRY"][0]][config["ENTRY"][1]] |= 16
-    maze[config["EXIT"][0]][config["EXIT"][1]] |= 32
-    
     # s = bfs(maze, config["WIDTH"], config["HEIGHT"], config["ENTRY"],
     #               config["EXIT"])
+
+    path = mg.bfs(maze, config["HEIGHT"], config["WIDTH"], config["ENTRY"], config["EXIT"])
 
     mlx = Mlx()
     mlx_ptr = mlx.mlx_init()
@@ -151,10 +115,15 @@ def main():
         print("MLX init failed")
         os._exit(1)
 
-    window_x = (config["WIDTH"] * config["BLOCK_SIZE"]) + 1
-    window_y = (config["HEIGHT"] * config["BLOCK_SIZE"]) + 1
+    window_x = (config["WIDTH"] * config["BLOCK_SIZE"])
+    window_y = (config["HEIGHT"] * config["BLOCK_SIZE"]) + 30
 
     win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "MLX Test")
+
+    mlx.mlx_string_put(mlx_ptr, win_ptr, 0, window_y - 20, 0xFFFFFF, "C - CHANGE COLOR")
+    mlx.mlx_string_put(mlx_ptr, win_ptr, 0, window_y, 0xFFFFFF, "R - REGENRATE MAZE")
+    mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y -20, 0xFFFFFF, "S - SOLVE")
+    mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y, 0xFFFFFF, "ESC - QUIT")
 
     mlx.mlx_string_put(mlx_ptr, win_ptr, int(window_x / 2) - 35,
                        int(window_y / 2) + 5, 0x0055AA, "M.S.I.M.N.A.T")
@@ -170,23 +139,42 @@ def main():
         "wptr": win_ptr,
     }
 
-    ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"], 0)
+    color_it = 0
 
-    def close_window(keycode, param):
+    ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
+    print(path)
+
+    def key_reg(keycode, param):
+        nonlocal color_it
+        nonlocal maze
+        nonlocal path
+
         if keycode == ESC:
             mlx.mlx_destroy_window(mlx_ptr, win_ptr)
             os._exit(0)
-        if keycode == KEY_R:
-            colors = (0x000001, 0x000100, 0x010000)
+
+        if keycode == KEY_C:
+            color_it += 1
+            MazeShow.FOREGROUND = froll[color_it % len(froll)]
+            MazeShow.BACKGROUND = broll[color_it % len(broll)]
+            MazeShow.COLOR_42 = roll42[color_it % len(roll42)]
+
             ms.draw_maze(maze_info, maze, config["WIDTH"],
-                         config["HEIGHT"],
-                         colors[random.randint(0, 2)] * random.randint(25, 99))
+                         config["HEIGHT"])
         if keycode == KEY_S:
             print("Starting BFS Solver...")
-            bfs_animated(maze_info, maze, config["WIDTH"], config["HEIGHT"], config["ENTRY"],
-                  config["EXIT"], ms)
+            ms.draw_path2(path, maze_info, 0xFFFFFF)
 
-    mlx.mlx_key_hook(win_ptr, close_window, None)
+        if keycode == KEY_R:
+            color_it += 1
+            maze = mg.DFS(config["WIDTH"], config["HEIGHT"], config["ENTRY"],
+                          config["EXIT"], config["42"], config["PERFECT"],
+                          random.seed())
+            path = mg.bfs(maze, config["HEIGHT"], config["WIDTH"], config["ENTRY"], config["EXIT"])
+            ms.draw_maze(maze_info, maze, config["WIDTH"],
+                         config["HEIGHT"])
+
+    mlx.mlx_key_hook(win_ptr, key_reg, None)
     mlx.mlx_loop(mlx_ptr)
 
 

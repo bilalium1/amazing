@@ -1,4 +1,5 @@
 import random
+from collections import deque
 
 E, N, W, S = 1, 2, 4, 8
 
@@ -32,19 +33,19 @@ class MazeGen():
         def display_42():
             # 4
             for i in range(0, 3):
-                maze[zone_42[1] + i][zone_42[0]] |= 207
-            maze[zone_42[1] + 2][zone_42[0] + 1] |= 207
+                maze[zone_42[1] + i][zone_42[0]] |= 15 | 64 | 128
+            maze[zone_42[1] + 2][zone_42[0] + 1] |= 15 | 64 | 128
             for i in range(0, 5):
-                maze[zone_42[1] + i][zone_42[0] + 2] |= 207
+                maze[zone_42[1] + i][zone_42[0] + 2] |= 15 | 64 | 128
             # 2
             for i in range(4, 7):
-                maze[zone_42[1]][zone_42[0] + i] |= 207
-            maze[zone_42[1] + 1][zone_42[0] + 6] |= 207
+                maze[zone_42[1]][zone_42[0] + i] |= 15 | 64 | 128
+            maze[zone_42[1] + 1][zone_42[0] + 6] |= 15 | 64 | 128
             for i in range(4, 7):
-                maze[zone_42[1] + 2][zone_42[0] + i] |= 207
-            maze[zone_42[1] + 3][zone_42[0] + 4] |= 207
+                maze[zone_42[1] + 2][zone_42[0] + i] |= 15 | 64 | 128
+            maze[zone_42[1] + 3][zone_42[0] + 4] |= 15 | 64 | 128
             for i in range(4, 7):
-                maze[zone_42[1] + 4][zone_42[0] + i] |= 207
+                maze[zone_42[1] + 4][zone_42[0] + i] |= 15 | 64 | 128
 
         display_42()
 
@@ -60,7 +61,7 @@ class MazeGen():
         if seed == 0:
             random.seed()
         else:
-            random.seed("=")
+            random.seed(seed)
         maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
         if w42:
             self.add_42(maze, w, h, sp, ep)
@@ -105,7 +106,32 @@ class MazeGen():
                             maze[ny][nx] ^= OPP[d]
                         break
 
+        maze[sp[1]][sp[0]] |= 16
+        maze[ep[1]][ep[0]] |= 32
+
         return maze
+
+    def bfs(self, maze: list[list[int]], h: int, w: int, start: tuple, end: tuple):
+        queue = deque([(start[0], start[1], [start])])
+        visited = {start}
+
+        while queue:
+            x, y, path = queue.popleft()
+
+            if (x, y) == end:
+                return path
+
+            for direction in [E, N, W, S]:
+                # move if path is open
+                if (maze[y][x] & direction) == 0:
+                    nx = x + DX[direction]
+                    ny = y + DY[direction]
+
+                    if 0 <= nx < w and 0 <= ny < h and (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        queue.append((nx, ny, path + [(nx, ny)]))
+
+        return None
 
     def output(self, maze: list[list[int]], w: int, h: int, out_file: str):
         file = open(out_file, "w")
