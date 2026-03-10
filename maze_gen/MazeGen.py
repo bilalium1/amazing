@@ -15,26 +15,13 @@ class MazeGen():
 
     def add_42(self, maze: list[list[int]], w: int, h: int,
                st: tuple, end: tuple):
+        if h and w <= 15:
+            return
         center = (w // 2, h // 2)
         zone_42 = [center[0] - 4, center[1] - 2]
+        reserve_42 = []
 
-        def overlaps(pos):
-            return (zone_42[0] <= pos[0] <= zone_42[0] + 6 and
-                    zone_42[1] <= pos[1] <= zone_42[1] + 6)
-
-        for pos in (st, end):
-            if overlaps(pos):
-                # decide direction relative to zone center
-                zx = zone_42[0] + 3
-                zy = zone_42[1] + 3
-
-                dx = -1 if pos[0] > zx else 1
-                dy = -1 if pos[1] > zy else 1
-
-                zone_42[0] = max(0, min(w - 7, zone_42[0] + dx))
-                zone_42[1] = max(0, min(h - 7, zone_42[1] + dy))
-
-        def display_42():
+        def display_42(reserve_42: list) -> list:
             # 4
             for i in range(0, 3):
                 maze[zone_42[1] + i][zone_42[0]] |= 15 | 64 | 128
