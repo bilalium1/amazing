@@ -220,25 +220,28 @@ def main():
 
                 ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
 
-            def move_exit(pos ,dx: int, dy: int):
+            def move_exit(dx: int, dy: int):
 
                 nonlocal path
                 nonlocal solved
                 nonlocal maze
+                nonlocal exit_pos
 
+                if exit_pos[0] + dx == config["ENTRY"][0] and exit_pos[1] + dy == config["ENTRY"][1]:
+                    return
 
                 b = ms.block(mlx, mlx_ptr, win_ptr,
-                             maze[pos[1]][pos[0]] & 15,
+                             maze[exit_pos[1]][exit_pos[0]] & 15,
                              config["BLOCK_SIZE"],
-                             (pos[0] * config["BLOCK_SIZE"], pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                             (exit_pos[0] * config["BLOCK_SIZE"], exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
                 b.erase(1, False)
-                maze[pos[1]][ pos[0]] -= 32
-                pos = (pos[0] + dx, pos[1] + dy)
-                maze[pos[1]][ pos[0]] += 32
+                maze[exit_pos[1]][exit_pos[0]] -= 32
+                exit_pos = (exit_pos[0] + dx, exit_pos[1] + dy)
+                maze[exit_pos[1]][exit_pos[0]] += 32
                 b2 = ms.block(mlx, mlx_ptr, win_ptr,
-                             maze[pos[1]][pos[0]] & 15,
+                             maze[exit_pos[1]][exit_pos[0]] & 15,
                              config["BLOCK_SIZE"],
-                             (pos[0] * config["BLOCK_SIZE"], pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                             (exit_pos[0] * config["BLOCK_SIZE"],exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
                 b2.erase(1, True)
                 if solved:
                     ms.draw_path2(path, maze_info, False)
@@ -247,20 +250,19 @@ def main():
                     config["HEIGHT"],
                     config["WIDTH"],
                     config["ENTRY"],
-                    pos
+                    exit_pos
                 )
                 if solved:
                     ms.draw_path2(path, maze_info, True)
-                return pos
 
             if keycode == KEY_RIGHT and exit_pos[0] + 1 < config["WIDTH"] and not (maze[exit_pos[1]][ exit_pos[0] + 1] & 128):
-                exit_pos = move_exit(exit_pos, 1, 0)
+                move_exit(1, 0)
             if keycode == KEY_LEFT and exit_pos[0] - 1 >= 0 and not (maze[exit_pos[1]][ exit_pos[0] - 1] & 128):
-                exit_pos = move_exit(exit_pos, -1, 0)
+                move_exit(-1, 0)
             if keycode == KEY_UP and exit_pos[1] - 1 >= 0 and not (maze[exit_pos[1] - 1][ exit_pos[0]] & 128):
-                exit_pos = move_exit(exit_pos, 0, -1)
+                move_exit(0, -1)
             if keycode == KEY_DOWN and exit_pos[1] + 1 < config["HEIGHT"] and not (maze[exit_pos[1] + 1][ exit_pos[0]] & 128):
-                exit_pos = move_exit(exit_pos, 0, 1)
+                move_exit(0, 1)
 
         mlx.mlx_key_hook(win_ptr, key_reg, None)
 
