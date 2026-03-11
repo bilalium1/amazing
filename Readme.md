@@ -4,5 +4,5 @@ theme should be to ask question how to do something like a user and anser them i
 
 # **A_MAZE_ING**
 
-*let's get lost in this maze*
+*let's get lost in thee maze*
 
