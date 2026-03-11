@@ -1,5 +1,5 @@
 def draw_menu(mlx, mlx_ptr):
-    menu_w = 600
+    menu_w = 550
     menu_h = 400
     menu_win = mlx.mlx_new_window(mlx_ptr, menu_w, menu_h, "Main Menu")
     mlx.mlx_string_put(mlx_ptr, menu_win, 200, 50, 0xFFFFFF, "=== MAZE GENERATOR ===")
@@ -9,7 +9,6 @@ def draw_menu(mlx, mlx_ptr):
     mlx.mlx_string_put(mlx_ptr, menu_win, 50, 210, 0xFFFFFF, "[ R ] - Regenerate maze")
     mlx.mlx_string_put(mlx_ptr, menu_win, 50, 270, 0xFFFFFF, "[ ARROWS ] - Move exit point.")
     mlx.mlx_string_put(mlx_ptr, menu_win, 50, 240, 0xFFFFFF, "[ ESC ] - Exit")
-
-
-    mlx.mlx_string_put(mlx_ptr, menu_win, 180, 320, 0x00AAFF, "Press [SPACE] to start")
+    
+    mlx.mlx_string_put(mlx_ptr, menu_win, 200, 320, 0x00AAFF, "Press [SPACE] to start")
     return (menu_win)

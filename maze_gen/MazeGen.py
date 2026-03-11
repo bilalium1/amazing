@@ -138,7 +138,7 @@ class MazeGen():
         return None
 
     def output(self, maze: list[list[int]], w: int, h: int, st: tuple,
-               end: tuple, out_file: str):
+               end: tuple, out_file: str, path: list[tuple]):
         file = open(out_file, "w")
 
         hex = "0123456789ABCDEF"
@@ -154,3 +154,19 @@ class MazeGen():
         file.write(str(st))
         file.write("\n")
         file.write(str(end))
+
+        for i in range(1, len(path)):
+            prev = path[i - 1]
+            curr = path[i]
+            dp = abs((curr[0] - prev[0])) - abs((curr[1] - prev[1]))
+            if (dp > 0):
+                if (curr[0] - prev[0] > 0):
+                    file.write("E")
+                else:
+                    file.write("W")
+            else:
+                if (curr[1] - prev[1] > 0):
+                    file.write("S")
+                else:
+                    file.write("N")
+

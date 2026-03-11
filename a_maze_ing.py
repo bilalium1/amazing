@@ -44,28 +44,31 @@ def parsing() -> dict:
         val = line.split("=")[1]
         if (key in ["WIDTH", "HEIGHT", "BLOCK_SIZE"]):
             try:
-                val = int(val)
+                num = int(val)
+                d.update({key: num})
             except ValueError:
                 raise ValueError(f"Invalid value for {key}.")
-            if val < 0:
+            if num < 0:
                 raise ValueError(f"Negative Value for {key}.")
         elif (key in ["ENTRY", "EXIT"]):
             try:
-                val = (int(val.split(",")[0]), int(val.split(",")[1]))
+                tp = (int(val.split(",")[0]), int(val.split(",")[1]))
             except ValueError:
                 raise ValueError(f"Invalid Value for {key}")
-            x, y = val
+            x, y = tp
             if x < 0 or y < 0:
                 raise ValueError(f"Negative coordinates for {key}.")
+            d.update({key: tp})
         elif (key in ["OUTPUT_FILE"]):
             if not val:
                 raise ValueError(f"{key} must have a value.")
+            else:
+                d.update({key: val})
         elif (key in ["PERFECT", "42"]):
             if (val.lower() == "false"):
-                val = False
+                d.update({key: False})
             else:
-                val = True
-        d.update({key: val})
+                d.update({key: True})
     file.close()
 
     # CHECK IF ANY MANDATORY CONFIGS ARE MISSING
@@ -123,21 +126,22 @@ def main():
         seed
     )
 
-    mg.output(
-        maze,
-        config["WIDTH"],
-        config["HEIGHT"],
-        config["ENTRY"],
-        config["EXIT"],
-        config["OUTPUT_FILE"]
-    )
-
     path = mg.bfs(
         maze,
         config["HEIGHT"],
         config["WIDTH"],
         config["ENTRY"],
         config["EXIT"]
+    )
+
+    mg.output(
+        maze,
+        config["WIDTH"],
+        config["HEIGHT"],
+        config["ENTRY"],
+        config["EXIT"],
+        config["OUTPUT_FILE"],
+        path
     )
 
     mlx = Mlx()
@@ -153,10 +157,10 @@ def main():
 
         win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "Maze")
 
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 0, window_y - 20, 0xFFFFFF, "C - COLOR")
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 0, window_y, 0xFFFFFF, "R - REGENERATE")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 20, 0xFFFFFF, "C - COLOR")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 5, 0xFFFFFF, "R - REGENERATE")
         mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 20, 0xFFFFFF, "S - SOLVE")
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y, 0xFFFFFF, "ESC - QUIT")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 5, 0xFFFFFF, "ESC - QUIT")
 
         maze_info = {
             "mlx": mlx,
@@ -218,6 +222,16 @@ def main():
                     exit_pos
                 )
 
+                mg.output(
+                    maze,
+                    config["WIDTH"],
+                    config["HEIGHT"],
+                    config["ENTRY"],
+                    config["EXIT"],
+                    config["OUTPUT_FILE"],
+                    path
+                )   
+
                 ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
 
             def move_exit(dx: int, dy: int):
@@ -252,6 +266,15 @@ def main():
                     config["ENTRY"],
                     exit_pos
                 )
+                mg.output(
+                    maze,
+                    config["WIDTH"],
+                    config["HEIGHT"],
+                    config["ENTRY"],
+                    config["EXIT"],
+                    config["OUTPUT_FILE"],
+                    path
+                )
                 if solved:
                     ms.draw_path2(path, maze_info, True)
 
@@ -265,6 +288,7 @@ def main():
                 move_exit(0, 1)
 
         mlx.mlx_key_hook(win_ptr, key_reg, None)
+        mlx.mlx_hook(menu_win, 33, 0, on_close, win_ptr)
 
     menu_win = draw_menu(mlx, mlx_ptr)
 
@@ -278,8 +302,13 @@ def main():
             mlx.mlx_destroy_window(mlx_ptr, menu_win)
             maze_window()
 
+    def on_close(win):
+        mlx.mlx_destroy_window(mlx_ptr, win)
+        os._exit(0)
+    
     mlx.mlx_key_hook(menu_win, menu_key_hook, None)
  
+    mlx.mlx_hook(menu_win, 33, 0, on_close, menu_win)
     mlx.mlx_loop(mlx_ptr)
 
 

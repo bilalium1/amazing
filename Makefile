@@ -15,10 +15,12 @@ debug:
 	$(PYTHON) -m pdb $(MAIN)
 
 clean:
-	rm -rf $(OUTPUT_FILE)
 	rm -rf __pycache__
 	rm -rf .mypy_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+
+fclean: clean
+	rm -rf $(OUTPUT_FILE)
 
 lint:
 	flake8 a_maze_ing.py maze_gen maze_show

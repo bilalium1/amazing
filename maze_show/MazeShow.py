@@ -50,11 +50,11 @@ class MazeShow():
                 for x in range(self.o[0] + 2, self.o[0] + self.s - 1):
                     for y in range(self.o[1] + 2, self.o[1] + self.s - 1):
                         self.m.mlx_pixel_put(self.mp, self.wp, x, y,
-                                             EXIT_COLOR)
+                                             FOREGROUND)
 
         def erase(self, margin, fill: bool):
             if fill:
-                color = 0x000000
+                color = FOREGROUND
             else:
                 color = BACKGROUND
             for i in range(self.o[0] + margin, self.o[0] + self.s - margin):
