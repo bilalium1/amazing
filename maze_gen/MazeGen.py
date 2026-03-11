@@ -169,4 +169,3 @@ class MazeGen():
                     file.write("S")
                 else:
                     file.write("N")
-
