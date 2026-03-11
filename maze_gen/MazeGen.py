@@ -15,28 +15,39 @@ class MazeGen():
 
     def add_42(self, maze: list[list[int]], w: int, h: int,
                st: tuple, end: tuple):
-        if h and w <= 15:
-            return
         center = (w // 2, h // 2)
-        zone_42 = [center[0] - 4, center[1] - 2]
-        reserve_42 = []
+        start_42 = [center[0] - 4, center[1] - 2]
 
-        def display_42(reserve_42: list) -> list:
+        blocks = [(0, 0), (0, 1), (0, 2),
+                  (1, 2),
+                  (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),
+                  (4, 0), (4, 2), (4, 3), (4, 4),
+                  (5, 0), (5, 2), (5, 4),
+                  (6, 0), (6, 1), (6, 2), (6, 4),
+                  ]
+        
+        def check_over(pos):
+            for b in blocks:
+                if pos[0] == start_42[0] + b[0] or pos[1] == start_42[1] + b[1]:
+                    return True
+            return False
+        
+        loop_count = 0
+        
+        while (check_over(st) or check_over(end)):
+            t = random.randint(-2, 2)
+            if start_42[0] + t > 0 and start_42[0] + 7 + t < w:
+                start_42[0] += t
+            if start_42[1] + t > 0 and start_42[1] + 6 + t < h:
+                start_42[1] += t
+            loop_count += 1
+            if loop_count > 50:
+                return
+
+        def display_42():
             # 4
-            for i in range(0, 3):
-                maze[zone_42[1] + i][zone_42[0]] |= 15 | 64 | 128
-            maze[zone_42[1] + 2][zone_42[0] + 1] |= 15 | 64 | 128
-            for i in range(0, 5):
-                maze[zone_42[1] + i][zone_42[0] + 2] |= 15 | 64 | 128
-            # 2
-            for i in range(4, 7):
-                maze[zone_42[1]][zone_42[0] + i] |= 15 | 64 | 128
-            maze[zone_42[1] + 1][zone_42[0] + 6] |= 15 | 64 | 128
-            for i in range(4, 7):
-                maze[zone_42[1] + 2][zone_42[0] + i] |= 15 | 64 | 128
-            maze[zone_42[1] + 3][zone_42[0] + 4] |= 15 | 64 | 128
-            for i in range(4, 7):
-                maze[zone_42[1] + 4][zone_42[0] + i] |= 15 | 64 | 128
+            for b in blocks:
+                maze[start_42[1] + b[1]][start_42[0] + b[0]] |= 15 | 64 | 128
 
         display_42()
 
@@ -49,15 +60,13 @@ class MazeGen():
         :param w: width of the maze
         :param h: height of the maze
         """
-        if seed == 0:
-            random.seed()
-        else:
-            random.seed(seed)
         maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
+
         if w42:
             self.add_42(maze, w, h, sp, ep)
 
         def dfs(x, y):
+            nonlocal maze
             maze[y][x] = maze[y][x] | 64  # set block as visited
 
             dirs = [S, W, N, E]
@@ -87,6 +96,10 @@ class MazeGen():
         if not pfct:
             for _ in range((w * h) // 5):
                 x, y = random.randint(0, w-1), random.randint(0, h-1)
+
+                if (maze[y][x] & 128):
+                    continue
+
                 dirs = [S, W, N, E]
                 random.shuffle(dirs)
                 for d in dirs:

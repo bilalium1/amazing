@@ -1,7 +1,8 @@
 PYTHON = python3
 MAIN = a_maze_ing.py
+OUTPUT_FILE = $(shell grep "OUTPUT_FILE" config.txt | cut -d'=' -f2)
 
-all: run
+all: run clean
 
 install:
 	pip install --upgrade pip
@@ -14,7 +15,7 @@ debug:
 	$(PYTHON) -m pdb $(MAIN)
 
 clean:
-	rm -rf maze.txt
+	rm -rf $(OUTPUT_FILE)
 	rm -rf __pycache__
 	rm -rf .mypy_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +

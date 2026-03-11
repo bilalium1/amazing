@@ -8,15 +8,21 @@ import os
 import random
 from collections import deque
 
-broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0CA3, 0x000000]
-froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0, 0xAAAAAA]
-roll42 = [0xFF82A9, 0x7F95D1, 0x000000, 0xF7567C, 0xF72585, 0xFFFFFF]
+broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0C53, 0x000000, 0xAA1122]
+froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0, 0xAAAAAA, 0x22AA11]
+roll42 = [0xFF82A9, 0x7F95D1, 0x550055, 0xF7567C, 0xD7A585, 0xFFFFFF, 0x2211AA]
 
 ESC = 65307
 KEY_R = 114
 KEY_S = 115
 KEY_C = 99
 KEY_ENTER = 32
+
+KEY_LEFT  = 65361
+KEY_UP    = 65362
+KEY_RIGHT = 65363
+KEY_DOWN  = 65364
+
 fps = 60
 
 S, W, N, E = 1, 2, 4, 8
@@ -34,27 +40,54 @@ def parsing() -> dict:
     for line in file.read().split("\n"):
         if len(line.split("=")) < 2:
             continue
-
         key = line.split("=")[0].strip()
         val = line.split("=")[1]
-
-        if key in ["WIDTH", "HEIGHT", "BLOCK_SIZE"]:
-            val = int(val)
-
-        elif key in ["ENTRY", "EXIT"]:
-            x, y = val.split(",")
-            val = (int(x), int(y))
-
-        elif key in ["PERFECT", "42"]:
-            val = False if val.lower() == "false" else True
-
+        if (key in ["WIDTH", "HEIGHT", "BLOCK_SIZE"]):
+            try:
+                val = int(val)
+            except ValueError:
+                raise ValueError(f"Invalid value for {key}.")
+            if val < 0:
+                raise ValueError(f"Negative Value for {key}.")
+        elif (key in ["ENTRY", "EXIT"]):
+            try:
+                val = (int(val.split(",")[0]), int(val.split(",")[1]))
+            except ValueError:
+                raise ValueError(f"Invalid Value for {key}")
+            x, y = val
+            if x < 0 or y < 0:
+                raise ValueError(f"Negative coordinates for {key}.")
+        elif (key in ["OUTPUT_FILE"]):
+            if not val:
+                raise ValueError(f"{key} must have a value.")
+        elif (key in ["PERFECT", "42"]):
+            if (val.lower() == "false"):
+                val = False
+            else:
+                val = True
         d.update({key: val})
-
     file.close()
 
+    # CHECK IF ANY MANDATORY CONFIGS ARE MISSING
     man = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
     if set(d.keys()).intersection(man) != man:
-        raise Exception(f"Mandatory argument(s) missing.")
+        raise Exception(f"Mandatory argument(s) missing."
+                        f"{man - set(d.keys()).intersection(man)}")
+    
+    if d["ENTRY"][0] == d["EXIT"][0] and d["ENTRY"][1] == d["EXIT"][1]:
+        raise ValueError("ENTRY and EXIT Coordinates Overlap.")
+
+    # CHECK FOR BORDERS
+    if d["ENTRY"][0] >= d["WIDTH"] or d["ENTRY"][1] >= d["HEIGHT"]:
+        raise ValueError("ENTRY Coordinates out of bounds.")
+    if d["EXIT"][0] >= d["WIDTH"] or d["EXIT"][1] >= d["HEIGHT"]:
+        raise ValueError("EXIT Coordinates out of bounds.")
+    
+    extras = {"BLOCK_SIZE": 25, "42": True, "SEED": 0}
+    
+    # SET DEFAULT
+    for k, v in extras.items():
+        d.setdefault(k, v)
 
     return d
 
@@ -66,11 +99,13 @@ def main():
     except Exception as e:
         print("Error :", e)
         return
+    
+    print(config)
 
-    while config["BLOCK_SIZE"] * config["HEIGHT"] > 1015:
+    while config["BLOCK_SIZE"] * config["HEIGHT"] > 900:
         config["BLOCK_SIZE"] -= 1
 
-    while config["BLOCK_SIZE"] * config["WIDTH"] > 1900:
+    while config["BLOCK_SIZE"] * config["WIDTH"] > 1700:
         config["BLOCK_SIZE"] -= 1
 
     mg = MazeGen.MazeGen()
@@ -113,10 +148,6 @@ def main():
         os._exit(1)
 
     def maze_window():
-
-        nonlocal maze
-        nonlocal path
-
         window_x = config["WIDTH"] * config["BLOCK_SIZE"]
         window_y = (config["HEIGHT"] * config["BLOCK_SIZE"]) + 30
 
@@ -134,6 +165,7 @@ def main():
             "wptr": win_ptr,
         }
 
+        exit_pos = config["EXIT"]
         color_it = 0
         solved = False
 
@@ -144,12 +176,14 @@ def main():
             nonlocal maze
             nonlocal path
             nonlocal solved
+            nonlocal exit_pos
 
             if keycode == ESC:
                 mlx.mlx_destroy_window(mlx_ptr, win_ptr)
                 os._exit(0)
 
             if keycode == KEY_C:
+                solved = False
                 color_it += 1
 
                 MazeShow.FOREGROUND = froll[color_it % len(froll)]
@@ -163,17 +197,17 @@ def main():
                 ms.draw_path2(path, maze_info, solved)
 
             if keycode == KEY_R:
-
-                seed = random.randint(0, 2**32)
+                solved = False
+                new_seed = random.randint(0, 2**32)
 
                 maze = mg.DFS(
                     config["WIDTH"],
                     config["HEIGHT"],
                     config["ENTRY"],
-                    config["EXIT"],
+                    exit_pos,
                     config["42"],
                     config["PERFECT"],
-                    seed
+                    new_seed
                 )
 
                 path = mg.bfs(
@@ -181,10 +215,52 @@ def main():
                     config["HEIGHT"],
                     config["WIDTH"],
                     config["ENTRY"],
-                    config["EXIT"]
+                    exit_pos
                 )
 
                 ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
+
+            def move_exit(pos ,dx: int, dy: int):
+
+                nonlocal path
+                nonlocal solved
+                nonlocal maze
+
+
+                b = ms.block(mlx, mlx_ptr, win_ptr,
+                             maze[pos[1]][pos[0]] & 15,
+                             config["BLOCK_SIZE"],
+                             (pos[0] * config["BLOCK_SIZE"], pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                b.erase(1, False)
+                maze[pos[1]][ pos[0]] -= 32
+                pos = (pos[0] + dx, pos[1] + dy)
+                maze[pos[1]][ pos[0]] += 32
+                b2 = ms.block(mlx, mlx_ptr, win_ptr,
+                             maze[pos[1]][pos[0]] & 15,
+                             config["BLOCK_SIZE"],
+                             (pos[0] * config["BLOCK_SIZE"], pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                b2.erase(1, True)
+                if solved:
+                    ms.draw_path2(path, maze_info, False)
+                path = mg.bfs(
+                    maze,
+                    config["HEIGHT"],
+                    config["WIDTH"],
+                    config["ENTRY"],
+                    pos
+                )
+                if solved:
+                    ms.draw_path2(path, maze_info, True)
+                return pos
+
+            if keycode == KEY_RIGHT and exit_pos[0] + 1 < config["WIDTH"] and not (maze[exit_pos[1]][ exit_pos[0] + 1] & 128):
+                exit_pos = move_exit(exit_pos, 1, 0)
+            if keycode == KEY_LEFT and exit_pos[0] - 1 >= 0 and not (maze[exit_pos[1]][ exit_pos[0] - 1] & 128):
+                exit_pos = move_exit(exit_pos, -1, 0)
+            if keycode == KEY_UP and exit_pos[1] - 1 >= 0 and not (maze[exit_pos[1] - 1][ exit_pos[0]] & 128):
+                exit_pos = move_exit(exit_pos, 0, -1)
+            if keycode == KEY_DOWN and exit_pos[1] + 1 < config["HEIGHT"] and not (maze[exit_pos[1] + 1][ exit_pos[0]] & 128):
+                exit_pos = move_exit(exit_pos, 0, 1)
 
         mlx.mlx_key_hook(win_ptr, key_reg, None)
 

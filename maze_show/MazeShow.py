@@ -41,18 +41,22 @@ class MazeShow():
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1] + self.s, self.c)
-            if (self.i & 16):
+            if (self.i & 16): # entry
                 for x in range(self.o[0] + 2, self.o[0] + self.s - 1):
                     for y in range(self.o[1] + 2, self.o[1] + self.s - 1):
                         self.m.mlx_pixel_put(self.mp, self.wp, x, y,
                                              ENTRY_COLOR)
-            if (self.i & 32):
+            if (self.i & 32): # exit
                 for x in range(self.o[0] + 2, self.o[0] + self.s - 1):
                     for y in range(self.o[1] + 2, self.o[1] + self.s - 1):
                         self.m.mlx_pixel_put(self.mp, self.wp, x, y,
                                              EXIT_COLOR)
 
-        def path(self, color, margin):
+        def erase(self, margin, fill: bool):
+            if fill:
+                color = 0x000000
+            else:
+                color = BACKGROUND
             for i in range(self.o[0] + margin, self.o[0] + self.s - margin):
                 for j in range(self.o[1] + margin,
                                self.o[1] + self.s - margin):
@@ -64,7 +68,6 @@ class MazeShow():
 
             def draw_line(curr, prev):
                 dp = abs((curr[0] - prev[0])) - abs((curr[1] - prev[1]))
-                print(dp)
                 if dp == 1:
                     if (curr[0] - prev[0] > 0):
                         for i in range(self.o[0], x_center):
@@ -176,7 +179,7 @@ class MazeShow():
             b = self.block(info["mlx"], info["mptr"], info["wptr"], 0,
                            info["size"], coord, color)
             for j in range(5, 2, -1):
-                b.path(FOREGROUND, j)
+                b.erase(j, True)
 
     def draw_path2(self, path: list[tuple], info, de: bool):
 
