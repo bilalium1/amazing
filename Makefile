@@ -24,5 +24,5 @@ fclean: clean
 	rm -rf $(OUTPUT_FILE)
 
 lint:
-	flake8 $(SRCS)
-	mypy $(SRCS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	python3 -m flake8 $(SRCS)
+	python3 -m mypy $(SRCS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs

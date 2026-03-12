@@ -135,7 +135,7 @@ def main() -> None:
         path
     )
 
-    mlx = Mlx.Mlx()
+    mlx = Mlx()
     mlx_ptr = mlx.mlx_init()
 
     if not mlx_ptr:
