@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/bilalium1/amazing/blob/main/reamde_assets/maze_mp4-ezgif.com-video-to-gif-converter.gif" width="600" height="600">
+  <img src="https://github.com/bilalium1/amazing/blob/main/reamde_assets/maze_mp4-ezgif.com-video-to-gif-converter.gif" width="800" height="100%">
 </p>
 
 ---
@@ -79,6 +79,14 @@ Lines starting with `#` are treated as comments.
 | `EXIT` | Ending coordinates `(x,y)` | `EXIT=19,14` |
 | `OUTPUT_FILE` | Destination file for hex maze data | `OUTPUT_FILE=maze.txt` |
 | `PERFECT` | Generate a perfect maze (single path) | `PERFECT=True` |
+
+### Optional Configuration Keys
+
+| Key | Description | Example |
+|-----|-------------|---------|
+| `BLOCK_SIZE` | Size of each block in the maze | `BLOCK_SIZE=25` |
+| `SEED` | Maze Seed | `SEED=42` |
+| `42` | display 42 on the maze | `42=True` |
 
 ---
 
@@ -248,7 +256,6 @@ the project transitioned early into a **full MiniLibX graphical implementation**
 ---
 
 <p align="center">
-  <img src="https://github.com/bilalium1/amazing/blob/main/reamde_assets/image0.gif" width="200">
+  <img src="https://www.nicepng.com/png/full/149-1491524_png-sonic-advance-knuckles-gif.png" width="280">
 </p>
-
-<p align="center"><em>M.S.I.M.N.A.T OUT</em></p>
+<p align="center"><em>MADE BY M.S.I.M.N.A.T</em></p>
