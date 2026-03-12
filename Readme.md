@@ -39,7 +39,7 @@ The project uses a **Makefile** to simplify setup and execution.
 ```bash
 make install
 This launches the maze generator using the default `config.txt`.
-
+```
 ---
 
 ## 🧹 Clean temporary files
