@@ -3,10 +3,10 @@
 from main_menu import draw_menu
 from maze_gen import MazeGen
 from maze_show import MazeShow
-from mlx.init import Mlx
+from mlx import Mlx
+from typing import Any, Dict
 import os
 import random
-from collections import deque
 
 broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0C53, 0x000000, 0xAA1122]
 froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0, 0xAAAAAA, 0x22AA11]
@@ -18,25 +18,16 @@ KEY_S = 115
 KEY_C = 99
 KEY_ENTER = 32
 
-KEY_LEFT  = 65361
-KEY_UP    = 65362
+KEY_LEFT = 65361
+KEY_UP = 65362
 KEY_RIGHT = 65363
-KEY_DOWN  = 65364
-
-fps = 60
-
-S, W, N, E = 1, 2, 4, 8
-
-DX = {E: 1, W: -1, N: 0, S: 0}
-DY = {E: 0, W: 0, N: -1, S: 1}
-
-OPP = {E: W, W: E, N: S, S: N}
+KEY_DOWN = 65364
 
 
-def parsing() -> dict:
+def parsing() -> Dict[str, Any]:
     file = open("config.txt", "r")
 
-    d = {}
+    d: Dict[str, Any] = {}
     for line in file.read().split("\n"):
         if len(line.split("=")) < 2:
             continue
@@ -59,7 +50,7 @@ def parsing() -> dict:
             if x < 0 or y < 0:
                 raise ValueError(f"Negative coordinates for {key}.")
             d.update({key: tp})
-        elif (key in ["OUTPUT_FILE"]):
+        elif (key in ["OUTPUT_FILE", "SEED"]):
             if not val:
                 raise ValueError(f"{key} must have a value.")
             else:
@@ -76,7 +67,7 @@ def parsing() -> dict:
     if set(d.keys()).intersection(man) != man:
         raise Exception(f"Mandatory argument(s) missing."
                         f"{man - set(d.keys()).intersection(man)}")
-    
+
     if d["ENTRY"][0] == d["EXIT"][0] and d["ENTRY"][1] == d["EXIT"][1]:
         raise ValueError("ENTRY and EXIT Coordinates Overlap.")
 
@@ -85,9 +76,9 @@ def parsing() -> dict:
         raise ValueError("ENTRY Coordinates out of bounds.")
     if d["EXIT"][0] >= d["WIDTH"] or d["EXIT"][1] >= d["HEIGHT"]:
         raise ValueError("EXIT Coordinates out of bounds.")
-    
-    extras = {"BLOCK_SIZE": 25, "42": True, "SEED": 0}
-    
+
+    extras = {"BLOCK_SIZE": 25, "42": True}
+
     # SET DEFAULT
     for k, v in extras.items():
         d.setdefault(k, v)
@@ -95,14 +86,14 @@ def parsing() -> dict:
     return d
 
 
-def main():
+def main() -> None:
 
     try:
         config = parsing()
     except Exception as e:
         print("Error :", e)
         return
-    
+
     print(config)
 
     while config["BLOCK_SIZE"] * config["HEIGHT"] > 900:
@@ -144,23 +135,27 @@ def main():
         path
     )
 
-    mlx = Mlx()
+    mlx = Mlx.Mlx()
     mlx_ptr = mlx.mlx_init()
 
     if not mlx_ptr:
         print("MLX init failed")
         os._exit(1)
 
-    def maze_window():
+    def maze_window() -> None:
         window_x = config["WIDTH"] * config["BLOCK_SIZE"]
         window_y = (config["HEIGHT"] * config["BLOCK_SIZE"]) + 30
 
         win_ptr = mlx.mlx_new_window(mlx_ptr, window_x, window_y, "Maze")
 
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 20, 0xFFFFFF, "C - COLOR")
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 5, 0xFFFFFF, "R - REGENERATE")
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 20, 0xFFFFFF, "S - SOLVE")
-        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 5, 0xFFFFFF, "ESC - QUIT")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 20, 0xFFFFFF,
+                           "C - COLOR")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 20, window_y - 5, 0xFFFFFF,
+                           "R - REGENERATE")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 20, 0xFFFFFF,
+                           "S - SOLVE")
+        mlx.mlx_string_put(mlx_ptr, win_ptr, 150, window_y - 5, 0xFFFFFF,
+                           "ESC - QUIT")
 
         maze_info = {
             "mlx": mlx,
@@ -175,12 +170,11 @@ def main():
 
         ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
 
-        def key_reg(keycode, param):
+        def key_reg(keycode: int, param: Any) -> None:
             nonlocal color_it
             nonlocal maze
             nonlocal path
             nonlocal solved
-            nonlocal exit_pos
 
             if keycode == ESC:
                 mlx.mlx_destroy_window(mlx_ptr, win_ptr)
@@ -194,7 +188,8 @@ def main():
                 MazeShow.BACKGROUND = broll[color_it % len(broll)]
                 MazeShow.COLOR_42 = roll42[color_it % len(roll42)]
 
-                ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
+                ms.draw_maze(maze_info, maze, config["WIDTH"],
+                             config["HEIGHT"])
 
             if keycode == KEY_S:
                 solved = not solved
@@ -230,32 +225,34 @@ def main():
                     config["EXIT"],
                     config["OUTPUT_FILE"],
                     path
-                )   
+                )
 
-                ms.draw_maze(maze_info, maze, config["WIDTH"], config["HEIGHT"])
+                ms.draw_maze(maze_info, maze, config["WIDTH"],
+                             config["HEIGHT"])
 
-            def move_exit(dx: int, dy: int):
+            def move_exit(dx: int, dy: int) -> None:
 
                 nonlocal path
-                nonlocal solved
-                nonlocal maze
                 nonlocal exit_pos
 
-                if exit_pos[0] + dx == config["ENTRY"][0] and exit_pos[1] + dy == config["ENTRY"][1]:
+                if (exit_pos[0] + dx == config["ENTRY"][0] and
+                        exit_pos[1] + dy == config["ENTRY"][1]):
                     return
 
                 b = ms.block(mlx, mlx_ptr, win_ptr,
                              maze[exit_pos[1]][exit_pos[0]] & 15,
                              config["BLOCK_SIZE"],
-                             (exit_pos[0] * config["BLOCK_SIZE"], exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                             (exit_pos[0] * config["BLOCK_SIZE"],
+                              exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
                 b.erase(1, False)
                 maze[exit_pos[1]][exit_pos[0]] -= 32
                 exit_pos = (exit_pos[0] + dx, exit_pos[1] + dy)
                 maze[exit_pos[1]][exit_pos[0]] += 32
                 b2 = ms.block(mlx, mlx_ptr, win_ptr,
-                             maze[exit_pos[1]][exit_pos[0]] & 15,
-                             config["BLOCK_SIZE"],
-                             (exit_pos[0] * config["BLOCK_SIZE"],exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
+                              maze[exit_pos[1]][exit_pos[0]] & 15,
+                              config["BLOCK_SIZE"],
+                              (exit_pos[0] * config["BLOCK_SIZE"],
+                               exit_pos[1] * config["BLOCK_SIZE"]), 0x000000)
                 b2.erase(1, True)
                 if solved:
                     ms.draw_path2(path, maze_info, False)
@@ -278,13 +275,17 @@ def main():
                 if solved:
                     ms.draw_path2(path, maze_info, True)
 
-            if keycode == KEY_RIGHT and exit_pos[0] + 1 < config["WIDTH"] and not (maze[exit_pos[1]][ exit_pos[0] + 1] & 128):
+            if (keycode == KEY_RIGHT and exit_pos[0] + 1 < config["WIDTH"] and
+                    not (maze[exit_pos[1]][exit_pos[0] + 1] & 128)):
                 move_exit(1, 0)
-            if keycode == KEY_LEFT and exit_pos[0] - 1 >= 0 and not (maze[exit_pos[1]][ exit_pos[0] - 1] & 128):
+            if (keycode == KEY_LEFT and exit_pos[0] - 1 >= 0 and
+                    not (maze[exit_pos[1]][exit_pos[0] - 1] & 128)):
                 move_exit(-1, 0)
-            if keycode == KEY_UP and exit_pos[1] - 1 >= 0 and not (maze[exit_pos[1] - 1][ exit_pos[0]] & 128):
+            if (keycode == KEY_UP and exit_pos[1] - 1 >= 0 and
+                    not (maze[exit_pos[1] - 1][exit_pos[0]] & 128)):
                 move_exit(0, -1)
-            if keycode == KEY_DOWN and exit_pos[1] + 1 < config["HEIGHT"] and not (maze[exit_pos[1] + 1][ exit_pos[0]] & 128):
+            if (keycode == KEY_DOWN and exit_pos[1] + 1 < config["HEIGHT"] and
+                    not (maze[exit_pos[1] + 1][exit_pos[0]] & 128)):
                 move_exit(0, 1)
 
         mlx.mlx_key_hook(win_ptr, key_reg, None)
@@ -292,7 +293,7 @@ def main():
 
     menu_win = draw_menu(mlx, mlx_ptr)
 
-    def menu_key_hook(keycode, param):
+    def menu_key_hook(keycode: int, param: Any) -> None:
 
         if keycode == ESC:
             mlx.mlx_destroy_window(mlx_ptr, menu_win)
@@ -302,12 +303,12 @@ def main():
             mlx.mlx_destroy_window(mlx_ptr, menu_win)
             maze_window()
 
-    def on_close(win):
+    def on_close(win: Any) -> None:
         mlx.mlx_destroy_window(mlx_ptr, win)
         os._exit(0)
-    
+
     mlx.mlx_key_hook(menu_win, menu_key_hook, None)
- 
+
     mlx.mlx_hook(menu_win, 33, 0, on_close, menu_win)
     mlx.mlx_loop(mlx_ptr)
 

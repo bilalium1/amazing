@@ -2,7 +2,7 @@
 # See mlx manuals and mlx.h from C library for function usage
 # C Functions that require addresses to pass back info are converted to
 #  Pythod methods that return a tuple
-
+# type: ignore
 
 from ctypes import *
 import os

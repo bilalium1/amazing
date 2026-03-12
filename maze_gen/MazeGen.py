@@ -1,5 +1,6 @@
 import random
 from collections import deque
+from typing import Any
 
 S, W, N, E = 1, 2, 4, 8
 
@@ -10,11 +11,11 @@ OPP = {E: W, W: E, N: S, S: N}
 
 
 class MazeGen():
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def add_42(self, maze: list[list[int]], w: int, h: int,
-               st: tuple, end: tuple):
+               st: tuple, end: tuple) -> None:
         center = (w // 2, h // 2)
         start_42 = [center[0] - 4, center[1] - 2]
 
@@ -25,15 +26,16 @@ class MazeGen():
                   (5, 0), (5, 2), (5, 4),
                   (6, 0), (6, 1), (6, 2), (6, 4),
                   ]
-        
-        def check_over(pos):
+
+        def check_over(pos: tuple) -> bool:
             for b in blocks:
-                if pos[0] == start_42[0] + b[0] or pos[1] == start_42[1] + b[1]:
+                if (pos[0] == start_42[0] + b[0]
+                        or pos[1] == start_42[1] + b[1]):
                     return True
             return False
-        
+
         loop_count = 0
-        
+
         while (check_over(st) or check_over(end)):
             t = random.randint(-2, 2)
             if start_42[0] + t > 0 and start_42[0] + 7 + t < w:
@@ -44,14 +46,15 @@ class MazeGen():
             if loop_count > 50:
                 return
 
-        def display_42():
+        def display_42() -> None:
             # 4
             for b in blocks:
                 maze[start_42[1] + b[1]][start_42[0] + b[0]] |= 15 | 64 | 128
 
         display_42()
 
-    def DFS(self, w: int, h: int, sp, ep, w42: bool, pfct: bool, seed: int):
+    def DFS(self, w: int, h: int, sp: tuple, ep: tuple,
+            w42: bool, pfct: bool, seed: int) -> list[list[int]]:
         """
         This is a function that generates 2d array of integers
         ranging from 0 to 15, each bit in every integers refers
@@ -62,11 +65,12 @@ class MazeGen():
         """
         maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
 
+        random.seed(seed)
+
         if w42:
             self.add_42(maze, w, h, sp, ep)
 
-        def dfs(x, y):
-            nonlocal maze
+        def dfs(x: int, y: int) -> tuple:
             maze[y][x] = maze[y][x] | 64  # set block as visited
 
             dirs = [S, W, N, E]
@@ -116,7 +120,7 @@ class MazeGen():
         return maze
 
     def bfs(self, maze: list[list[int]], h: int, w: int, start: tuple,
-            end: tuple):
+            end: tuple) -> Any:
         queue = deque([(start[0], start[1], [start])])
         visited = {start}
 
@@ -138,7 +142,7 @@ class MazeGen():
         return None
 
     def output(self, maze: list[list[int]], w: int, h: int, st: tuple,
-               end: tuple, out_file: str, path: list[tuple]):
+               end: tuple, out_file: str, path: list[tuple]) -> None:
         file = open(out_file, "w")
 
         hex = "0123456789ABCDEF"
@@ -151,9 +155,10 @@ class MazeGen():
             file.write("\n")
             i += 1
         file.write("\n")
-        file.write(str(st))
+        file.write(f"{st[0]}, {st[1]}")
         file.write("\n")
-        file.write(str(end))
+        file.write(f"{end[0]}, {end[1]}")
+        file.write("\n")
 
         for i in range(1, len(path)):
             prev = path[i - 1]

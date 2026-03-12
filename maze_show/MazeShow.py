@@ -1,4 +1,5 @@
 import time
+from typing import Any
 FOREGROUND = 0x2A1F2D
 BACKGROUND = 0x003F91
 COLOR_42 = 0x5B6C5D
@@ -15,7 +16,9 @@ class MazeShow():
         """
         This class is for each block in the maze to be displayed
         """
-        def __init__(self, mmlx, mlx_ptr, win_ptr, info, size, offset, color):
+        def __init__(self, mmlx: Any, mlx_ptr: Any, win_ptr: Any,
+                     info: int, size: int, offset: tuple,
+                     color: Any) -> None:
             self.i = info
             self.s = size
             self.o = offset
@@ -24,7 +27,7 @@ class MazeShow():
             self.wp = win_ptr
             self.m = mmlx
 
-        def draw(self):
+        def draw(self) -> None:
             if (self.i & 8):  # EAST
                 for y in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp,
@@ -41,18 +44,18 @@ class MazeShow():
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1] + self.s, self.c)
-            if (self.i & 16): # entry
+            if (self.i & 16):  # entry
                 for x in range(self.o[0] + 2, self.o[0] + self.s - 1):
                     for y in range(self.o[1] + 2, self.o[1] + self.s - 1):
                         self.m.mlx_pixel_put(self.mp, self.wp, x, y,
                                              ENTRY_COLOR)
-            if (self.i & 32): # exit
+            if (self.i & 32):  # exit
                 for x in range(self.o[0] + 2, self.o[0] + self.s - 1):
                     for y in range(self.o[1] + 2, self.o[1] + self.s - 1):
                         self.m.mlx_pixel_put(self.mp, self.wp, x, y,
                                              FOREGROUND)
 
-        def erase(self, margin, fill: bool):
+        def erase(self, margin: int, fill: bool) -> None:
             if fill:
                 color = FOREGROUND
             else:
@@ -62,11 +65,12 @@ class MazeShow():
                                self.o[1] + self.s - margin):
                     self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
 
-        def line(self, color, previous, current, next):
+        def line(self, color: int, previous: tuple,
+                 current: tuple, next: tuple) -> None:
             x_center = self.o[0] + self.s // 2
             y_center = self.o[1] + self.s // 2
 
-            def draw_line(curr, prev):
+            def draw_line(curr: tuple, prev: tuple) -> None:
                 dp = abs((curr[0] - prev[0])) - abs((curr[1] - prev[1]))
                 if dp == 1:
                     if (curr[0] - prev[0] > 0):
@@ -100,23 +104,25 @@ class MazeShow():
             draw_line(current, previous)
             draw_line(current, next)
 
-        def animate(self):
+        def animate(self) -> None:
             for i in range(self.o[0], self.o[0] + self.s):
                 for j in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, i, j, self.c)
             time.sleep(0.5)
 
-        def clear(self, color):
+        def clear(self, color: int) -> None:
             for i in range(self.o[0], self.o[0] + self.s):
                 for j in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
 
-        def color_42(self, color):
+        def color_42(self, color: int) -> None:
             for i in range(self.o[0] + 2, self.o[0] + self.s - 1):
                 for j in range(self.o[1] + 2, self.o[1] + self.s - 1):
                     self.m.mlx_pixel_put(self.mp, self.wp, i, j, color)
 
-    def display_line(self, info, maze, hv, i, j, st, ed, color, bg_color):
+    def display_line(self, info: Any, maze: list[list[int]],
+                     hv: bool, i: int, j: int,
+                     st: int, ed: int, color: int, bg_color: int) -> None:
 
         inc = 1
         if st <= ed:
@@ -147,7 +153,8 @@ class MazeShow():
                 if maze[i][j] & 128:
                     b.color_42(COLOR_42)
 
-    def draw_maze(self, maze_info, maze, w, h):
+    def draw_maze(self, maze_info: dict[str, Any],
+                  maze: list[list[int]], w: int, h: int) -> None:
 
         i = 0
         j = 0
@@ -171,8 +178,7 @@ class MazeShow():
             i = loops
             j = loops
 
-    def draw_path(self, path: list[tuple], info, color):
-
+    def draw_path(self, path: list[tuple], info: Any, color: int) -> None:
         for i in path:
             coord = (i[0] * info["size"], i[1] * info["size"])
 
@@ -181,8 +187,7 @@ class MazeShow():
             for j in range(5, 2, -1):
                 b.erase(j, True)
 
-    def draw_path2(self, path: list[tuple], info, de: bool):
-
+    def draw_path2(self, path: list[tuple], info: Any, de: bool) -> None:
         if de:
             color = COLOR_42
         else:

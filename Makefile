@@ -1,5 +1,6 @@
 PYTHON = python3
 MAIN = a_maze_ing.py
+SRCS = maze_gen maze_show main_menu.py $(MAIN)
 OUTPUT_FILE = $(shell grep "OUTPUT_FILE" config.txt | cut -d'=' -f2)
 
 all: run clean
@@ -23,8 +24,5 @@ fclean: clean
 	rm -rf $(OUTPUT_FILE)
 
 lint:
-	flake8 a_maze_ing.py maze_gen maze_show
-
-lint-strict:
-	flake8 .
-	mypy . --strict
+	flake8 $(SRCS)
+	mypy $(SRCS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
