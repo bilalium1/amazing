@@ -26,6 +26,3 @@ fclean: clean
 lint:
 	python3 -m flake8 $(SRCS)
 	python3 -m mypy $(SRCS) --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
-
-valid:
-	python3 output_validator.py $(OUTPUT_FILE)
