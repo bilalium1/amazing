@@ -57,7 +57,7 @@ def parsing() -> Dict[str, Any]:
                 raise ValueError(f"{key} must have a value.")
             else:
                 d.update({key: val})
-        elif (key in ["PERFECT"]):
+        elif (key in ["PERFECT", "42"]):
             if (val.lower() == "false"):
                 d.update({key: False})
             elif (val.lower() == "true"):
@@ -97,8 +97,6 @@ def main() -> None:
     except Exception as e:
         print("Error :", e)
         return
-
-    print(config)
 
     while config["BLOCK_SIZE"] * config["HEIGHT"] > 900:
         config["BLOCK_SIZE"] -= 1

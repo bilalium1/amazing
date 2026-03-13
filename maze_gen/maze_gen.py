@@ -66,6 +66,7 @@ class MazeGen():
         :param w: width of the maze
         :param h: height of the maze
         """
+
         maze = [[15 for _ in range(w)] for _ in range(h)]  # closed maze
 
         random.seed(seed)
