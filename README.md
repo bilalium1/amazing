@@ -13,7 +13,7 @@
 
 ---
 
-# 📚 About The Project
+# 📚 Description
 
 **A_MAZE_ING** is a maze generation and visualization project combining **algorithmic complexity** with **interactive graphics**.
 

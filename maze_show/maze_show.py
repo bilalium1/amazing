@@ -1,8 +1,8 @@
 import time
 from typing import Any
-FOREGROUND = 0x2A1F2D
-BACKGROUND = 0x003F91
-COLOR_42 = 0x5B6C5D
+FOREGROUND = 0x0D1821
+BACKGROUND = 0x344966
+COLOR_42 = 0xE6AACE
 ENTRY_COLOR = 0xFFFFFF
 EXIT_COLOR = 0x000000
 
@@ -28,19 +28,19 @@ class MazeShow():
             self.m = mmlx
 
         def draw(self) -> None:
-            if (self.i & 8):  # EAST
+            if (self.i & 2):  # EAST
                 for y in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp,
                                          self.o[0] + self.s, y, self.c)
-            if (self.i & 4):  # NORTH
+            if (self.i & 1):  # NORTH
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1], self.c)
-            if (self.i & 2):  # WEST
+            if (self.i & 8):  # WEST
                 for y in range(self.o[1], self.o[1] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp,
                                          self.o[0], y, self.c)
-            if (self.i & 1):  # SOUTH
+            if (self.i & 4):  # SOUTH
                 for x in range(self.o[0], self.o[0] + self.s):
                     self.m.mlx_pixel_put(self.mp, self.wp, x,
                                          self.o[1] + self.s, self.c)

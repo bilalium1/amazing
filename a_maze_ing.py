@@ -1,16 +1,16 @@
-# 0000
-# swne
+# 0010
+# wsen
 from main_menu import draw_menu
-from maze_gen import MazeGen
-from maze_show import MazeShow
+from maze_gen import maze_gen
+from maze_show import maze_show
 from mlx.Mlx import Mlx  # type: ignore
 from typing import Any, Dict
 import os
 import random
 
-broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0C53, 0x000000, 0xAA1122]
-froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0, 0xAAAAAA, 0x22AA11]
-roll42 = [0xFF82A9, 0x7F95D1, 0x550055, 0xF7567C, 0xD7A585, 0xFFFFFF, 0x2211AA]
+broll = [0xB2EDC5, 0xB8336A, 0xEDD3C4, 0x62929E, 0x3A0C53, 0x000000, 0x7D7ABC]
+froll = [0x7C7287, 0xACACDE, 0x7765E3, 0x5DFDCB, 0x4CC9F0, 0xAAAAAA, 0xEF767A]
+roll42 = [0xFF82A9, 0x7F95D1, 0x550055, 0xF7567C, 0xD7A585, 0xFFFFFF, 0x23F0C7]
 
 ESC = 65307
 KEY_R = 114
@@ -43,6 +43,8 @@ def parsing() -> Dict[str, Any]:
                 raise ValueError(f"Negative Value for {key}.")
         elif (key in ["ENTRY", "EXIT"]):
             try:
+                if (len(val.split(",")) < 2):
+                    raise ValueError
                 tp = (int(val.split(",")[0]), int(val.split(",")[1]))
             except ValueError:
                 raise ValueError(f"Invalid Value for {key}")
@@ -55,11 +57,13 @@ def parsing() -> Dict[str, Any]:
                 raise ValueError(f"{key} must have a value.")
             else:
                 d.update({key: val})
-        elif (key in ["PERFECT", "42"]):
+        elif (key in ["PERFECT"]):
             if (val.lower() == "false"):
                 d.update({key: False})
-            else:
+            elif (val.lower() == "true"):
                 d.update({key: True})
+            else:
+                raise ValueError("PERFECT is not a boolean.")
     file.close()
 
     # CHECK IF ANY MANDATORY CONFIGS ARE MISSING
@@ -102,8 +106,8 @@ def main() -> None:
     while config["BLOCK_SIZE"] * config["WIDTH"] > 1700:
         config["BLOCK_SIZE"] -= 1
 
-    mg = MazeGen.MazeGen()
-    ms = MazeShow.MazeShow()
+    mg = maze_gen.MazeGen()
+    ms = maze_show.MazeShow()
 
     seed = config.get("SEED", random.randint(0, 2**32))
 
@@ -116,8 +120,6 @@ def main() -> None:
         config["PERFECT"],
         seed
     )
-
-    # maze = maze = [[15 for _ in range(config["WIDTH"])] for _ in range(config["HEIGHT"])]  # closed maze
 
     path = mg.bfs(
         maze,
@@ -186,9 +188,9 @@ def main() -> None:
                 solved = False
                 color_it += 1
 
-                MazeShow.FOREGROUND = froll[color_it % len(froll)]
-                MazeShow.BACKGROUND = broll[color_it % len(broll)]
-                MazeShow.COLOR_42 = roll42[color_it % len(roll42)]
+                maze_show.FOREGROUND = froll[color_it % len(froll)]
+                maze_show.BACKGROUND = broll[color_it % len(broll)]
+                maze_show.COLOR_42 = roll42[color_it % len(roll42)]
 
                 ms.draw_maze(maze_info, maze, config["WIDTH"],
                              config["HEIGHT"])
@@ -270,7 +272,7 @@ def main() -> None:
                     config["WIDTH"],
                     config["HEIGHT"],
                     config["ENTRY"],
-                    config["EXIT"],
+                    exit_pos,
                     config["OUTPUT_FILE"],
                     path
                 )

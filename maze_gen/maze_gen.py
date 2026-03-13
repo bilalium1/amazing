@@ -2,7 +2,7 @@ import random
 from collections import deque
 from typing import Any
 
-S, W, N, E = 1, 2, 4, 8
+N, E, S, W = 1, 2, 4, 8
 
 DX = {E: 1, W: -1, N: 0, S: 0}
 DY = {E: 0, W: 0, N: -1, S: 1}
@@ -16,6 +16,9 @@ class MazeGen():
 
     def add_42(self, maze: list[list[int]], w: int, h: int,
                st: tuple, end: tuple) -> None:
+        """
+        This function adds 42 to the bit integer map
+        """
         center = (w // 2, h // 2)
         start_42 = [center[0] - 4, center[1] - 2]
 
@@ -73,7 +76,7 @@ class MazeGen():
         def dfs(x: int, y: int) -> tuple:
             maze[y][x] = maze[y][x] | 64  # set block as visited
 
-            dirs = [S, W, N, E]
+            dirs = [N, E, S, W]
             random.shuffle(dirs)
 
             for d in dirs:
@@ -104,7 +107,7 @@ class MazeGen():
                 if (maze[y][x] & 128):
                     continue
 
-                dirs = [S, W, N, E]
+                dirs = [N, E, S, W]
                 random.shuffle(dirs)
                 for d in dirs:
                     nx, ny = x + DX[d], y + DY[d]
@@ -125,12 +128,11 @@ class MazeGen():
         visited = {start}
 
         while queue:
-            print(queue)
             x, y, path = queue.popleft()
             if (x, y) == end:
                 return path
 
-            for direction in [S, W, N, E]:
+            for direction in [N, E, S, W]:
                 # move if path is open
                 if (maze[y][x] & direction) == 0:
                     nx = x + DX[direction]
@@ -161,7 +163,7 @@ class MazeGen():
         file.write(f"{end[0]}, {end[1]}")
         file.write("\n")
 
-        if path == None:
+        if path is None:
             return
 
         for i in range(1, len(path)):
