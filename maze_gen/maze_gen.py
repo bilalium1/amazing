@@ -103,15 +103,18 @@ class MazeGen():
         if not pfct:
             for _ in range((w * h) // 5):
                 x, y = random.randint(0, w-1), random.randint(0, h-1)
-
-                if (maze[y][x] & 128):
+                if (maze[y][x] & 128):  # 42 stays closed
                     continue
 
                 dirs = [N, E, S, W]
+
                 random.shuffle(dirs)
                 for d in dirs:
                     nx, ny = x + DX[d], y + DY[d]
                     if 0 <= nx < w and 0 <= ny < h:
+                        if (maze[ny][nx] & 128):  # 42 stays closed
+                            continue
+
                         if maze[y][x] & d and maze[ny][nx] & OPP[d]:
                             maze[y][x] ^= d
                             maze[ny][nx] ^= OPP[d]
@@ -132,11 +135,10 @@ class MazeGen():
             if (x, y) == end:
                 return path
 
-            for direction in [N, E, S, W]:
-                # move if path is open
-                if (maze[y][x] & direction) == 0:
-                    nx = x + DX[direction]
-                    ny = y + DY[direction]
+            for d in [N, E, S, W]:
+                if maze[y][x] & d == 0:
+                    nx = x + DX[d]
+                    ny = y + DY[d]
 
                     if 0 <= nx < w and 0 <= ny < h and (nx, ny) not in visited:
                         visited.add((nx, ny))

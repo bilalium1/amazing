@@ -1,8 +1,8 @@
-HEIGHT=5
-WIDTH=5
-ENTRY=1, 2
-EXIT=2, 4
+height=15
+width=15
+entry=1,1
+exit=1,0
 BLOCK_SIZE=50
-PERFECT=true
-OUTPUT_FILE=maze.txt
+perfect=false
+output_file=maze.txt
 SEED=0
