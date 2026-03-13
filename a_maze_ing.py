@@ -3,7 +3,7 @@
 from main_menu import draw_menu
 from maze_gen import MazeGen
 from maze_show import MazeShow
-from mlx import Mlx
+from mlx.Mlx import Mlx  # type: ignore
 from typing import Any, Dict
 import os
 import random
@@ -117,6 +117,8 @@ def main() -> None:
         seed
     )
 
+    # maze = maze = [[15 for _ in range(config["WIDTH"])] for _ in range(config["HEIGHT"])]  # closed maze
+
     path = mg.bfs(
         maze,
         config["HEIGHT"],
@@ -135,7 +137,7 @@ def main() -> None:
         path
     )
 
-    mlx = Mlx.Mlx()
+    mlx = Mlx()
     mlx_ptr = mlx.mlx_init()
 
     if not mlx_ptr:

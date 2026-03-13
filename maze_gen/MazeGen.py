@@ -125,6 +125,7 @@ class MazeGen():
         visited = {start}
 
         while queue:
+            print(queue)
             x, y, path = queue.popleft()
             if (x, y) == end:
                 return path
@@ -159,6 +160,9 @@ class MazeGen():
         file.write("\n")
         file.write(f"{end[0]}, {end[1]}")
         file.write("\n")
+
+        if path == None:
+            return
 
         for i in range(1, len(path)):
             prev = path[i - 1]
