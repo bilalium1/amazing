@@ -1,7 +1,7 @@
 PYTHON = python3
 MAIN = a_maze_ing.py
 SRCS = maze_gen maze_show main_menu.py $(MAIN)
-OUTPUT_FILE = $(shell grep "OUTPUT_FILE" config.txt | cut -d'=' -f2)
+OUTPUT_FILE = $(shell grep -i "OUTPUT_FILE" config.txt | cut -d'=' -f2)
 
 all: run clean
 
